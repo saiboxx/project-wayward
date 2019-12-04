@@ -1,3 +1,6 @@
 mlagents
 numpy
-tensorflow-gpu
+tensorflow
+
+# local package
+-e .
