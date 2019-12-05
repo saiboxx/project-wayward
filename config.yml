@@ -1,6 +1,6 @@
 ###############################################################################
 # SET PARAMETERS FOR TRAINING
 ###############################################################################
-TRAIN_MODE: True
-EXECUTABLE: walker
-EPISODES: 100
+EXECUTABLE: crawler
+STEPS: 2000
+VERBOSE_STEPS: 100
