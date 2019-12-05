@@ -22,14 +22,17 @@ def main():
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
+    mean_reward = 0
     for steps in range(cfg["STEPS"]):
         info = env.step(np.random.randn(10, 20))
         brain_info = info[env.external_brain_names[0]]
 
         acc_reward += sum(brain_info.rewards) / len(brain_info.rewards)
+        mean_reward += sum(brain_info.rewards) / len(brain_info.rewards)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
-            print("Total reward with {0} steps: {1:.5f}".format(steps, acc_reward))
+            print("Mean reward with {0} steps: {1:.5f}".format(steps, acc_reward))
+            mean_reward = 0
 
     print("Closing environment.")
     env.close()
