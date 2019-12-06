@@ -19,6 +19,7 @@ def main():
     brain_info = info[env.external_brain_names[0]]
     observation_space = brain_info.vector_observations.shape[1]
     action_space = brain_info.action_masks.shape[1]
+    state = brain_info.vector_observations
 
     print("Creating Agent.")
     agent = Agent(observation_space, action_space)
@@ -27,8 +28,13 @@ def main():
     acc_reward = 0
     mean_reward = 0
     for steps in range(cfg["STEPS"]):
-        info = env.step(np.random.randn(10, 20))
+        action = agent.actor.predict(state)
+        info = env.step(action)
         brain_info = info[env.external_brain_names[0]]
+        new_state = brain_info.vector_observations
+        reward = brain_info.rewards
+        agent.replay_buffer.add(state, action, reward, new_state)
+        agent.learn()
 
         acc_reward += sum(brain_info.rewards) / len(brain_info.rewards)
         mean_reward += sum(brain_info.rewards) / len(brain_info.rewards)
@@ -36,6 +42,8 @@ def main():
         if steps % cfg["VERBOSE_STEPS"] == 0:
             print("Mean reward with {0} steps: {1:.5f}".format(steps, acc_reward))
             mean_reward = 0
+
+        state = new_state
 
     print("Closing environment.")
     env.close()
