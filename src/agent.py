@@ -1,4 +1,6 @@
 import yaml
+import tensorflow as tf
+
 from src.networks import Actor, Critic
 from src.replay_buffer import ReplayBuffer
 
@@ -18,13 +20,16 @@ class Agent(object):
         self.gamma = cfg["GAMMA"]
 
     def learn(self):
+        if self.replay_buffer.cur_buffer_size > self.replay_buffer.batch_size:
+            # Get experiences from replay buffer
+            state, action, reward, new_state = self.replay_buffer.sample()
 
-        # Get experiences from replay buffer
-        state, action, reward, new_state = self.replay_buffer.sample()
+            # Calculate targets
+            target_values = self.critic.predict(new_state, self.actor.predict(new_state))
+            target = reward + self.gamma * target_values.flatten()
 
-        # Calculate targets
-        target_values = self.critic.predict(new_state, self.actor.predict(new_state))
-        target = reward + self.gamma * target_values
+            # Update critic
+            self.critic.update(state, action, target)
 
-        # Train critic
-        self.critic.update(state, action, target)
+            # Get actions from Actor with old states
+            a_output = tf.convert_to_tensor(self.actor.predict(state))

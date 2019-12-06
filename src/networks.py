@@ -51,9 +51,9 @@ class Critic(object):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-        self.network = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
         self.loss = mean_squared_error
         self.optimizer = Adam(learning_rate=cfg["CRITIC_LEARNING_RATE"])
+        self.network = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
 
     def build(self, observation_space: int, action_space: int, layer_sizes: list)\
             -> Sequential:
@@ -74,6 +74,8 @@ class Critic(object):
         model.add(Dense(1, kernel_initializer=RandomUniform(minval=-0.003, maxval=0.003)))
         model.add(Activation("linear"))
 
+        model.compile(loss=self.loss, optimizer=self.optimizer)
+
         return model
 
     def predict(self, state: np.ndarray, action: np.ndarray) -> np.ndarray:
@@ -81,4 +83,5 @@ class Critic(object):
         return self.network.predict(net_input)
 
     def update(self, state: np.ndarray, action: np.ndarray, target: np.ndarray):
-        pass
+        net_input = np.hstack([state, action])
+        self.network.fit(net_input, target, batch_size=len(target), verbose=0)
