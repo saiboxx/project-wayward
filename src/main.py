@@ -15,10 +15,13 @@ def main():
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
     env = load_environment(cfg["EXECUTABLE"])
-    env.reset()
+    info = env.reset()
+    brain_info = info[env.external_brain_names[0]]
+    observation_space = brain_info.vector_observations.shape[1]
+    action_space = brain_info.action_masks.shape[1]
 
     print("Creating Agent.")
-    agent = Agent()
+    agent = Agent(observation_space, action_space)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
