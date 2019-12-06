@@ -85,3 +85,8 @@ class Critic(object):
     def update(self, state: np.ndarray, action: np.ndarray, target: np.ndarray):
         net_input = np.hstack([state, action])
         self.network.fit(net_input, target, batch_size=len(target), verbose=0)
+
+    def get_gradients(self, state: np.ndarray, a_output: np.ndarray):
+        pass
+        # <TODO>
+        # Get gradients w.r.t. a_output

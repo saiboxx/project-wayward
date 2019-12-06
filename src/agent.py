@@ -33,3 +33,16 @@ class Agent(object):
 
             # Get actions from Actor with old states
             a_output = tf.convert_to_tensor(self.actor.predict(state))
+
+            # Get Gradient from critic
+            # <TODO>
+            # This method
+            gradient_critic = self.critic.get_gradients(state, a_output)
+
+            # Apply gradient to actor network
+            # <TODO>
+
+            # Update target networks
+            # Target networks (basically just weights) still have to be initialized
+            # and of course be updated
+            # <TODO>

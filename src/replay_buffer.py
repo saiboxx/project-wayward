@@ -1,4 +1,3 @@
-from _collections import deque
 import random
 import numpy as np
 import yaml
