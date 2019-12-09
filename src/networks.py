@@ -48,7 +48,7 @@ class Actor(object):
 
     def update_target(self, tau: float):
         new_weights = np.array(self.target.get_weights()) * tau + np.array(self.network.get_weights()) * (1 - tau)
-        return self.target.set_weights(new_weights)
+        self.target.set_weights(new_weights)
 
 
 class Critic(object):
@@ -98,4 +98,4 @@ class Critic(object):
 
     def update_target(self, tau: float):
         new_weights = np.array(self.target.get_weights()) * tau + np.array(self.network.get_weights()) * (1 - tau)
-        return self.target.set_weights(new_weights)
+        self.target.set_weights(new_weights)
