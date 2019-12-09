@@ -40,15 +40,15 @@ class Agent(object):
 
             # Get Gradient from critic
             with tf.GradientTape() as tape:
-                next_action = self.actor.network(state)
-                actor_loss = -tf.reduce_mean(self.critic.network([state, next_action]))
+                action = self.actor.network(state)
+                loss = -tf.reduce_mean(self.critic.network([state, action]))
 
-            actor_grad = tape.gradient(actor_loss, self.actor.network.trainable_variables)
+            actor_grad = tape.gradient(loss, self.actor.network.trainable_variables)
 
-            print(actor_grad)
             # Apply gradient to actor network
-            #self.actor.update_network(gradient_critic)
+            self.actor.optimizer.apply_gradients(zip(actor_grad,
+                                                     self.actor.network.trainable_variables))
 
             # Update target networks
-            #self.actor.update_target(self.tau)
-            #self.critic.update_target(self.tau)
+            self.actor.update_target(self.tau)
+            self.critic.update_target(self.tau)

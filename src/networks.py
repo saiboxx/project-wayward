@@ -46,12 +46,9 @@ class Actor(object):
         noise = np.random.normal(0, 0.1, predictions.shape)
         return predictions + noise
 
-    def update_network(self, gradients: tf.Tensor):
-        self.optimizer.apply_gradients(zip())
-
     def update_target(self, tau: float):
-        new_weights = self.target.get_weights() * tau + self.network.get_weights() * (1 - tau)
-        self.target.set_weights(new_weights)
+        new_weights = np.array(self.target.get_weights()) * tau + np.array(self.network.get_weights()) * (1 - tau)
+        return self.target.set_weights(new_weights)
 
 
 class Critic(object):
@@ -100,12 +97,5 @@ class Critic(object):
         self.network.fit([state, action], target, batch_size=len(target), verbose=0)
 
     def update_target(self, tau: float):
-        new_weights = self.target.get_weights() * tau + self.network.get_weights() * (1 - tau)
-        self.target.set_weights(new_weights)
-
-    def get_gradients(self, state: np.ndarray):
-        with tf.GradientTape() as tape:
-            a_out = self.network.predict(state)
-            loss = -tf.reduce_mean(self.critic(np.hstack([state, a_out])))
-
-        actor_grad = tape.gradient(loss, self.actor.trainable_variables)
+        new_weights = np.array(self.target.get_weights()) * tau + np.array(self.network.get_weights()) * (1 - tau)
+        return self.target.set_weights(new_weights)
