@@ -22,7 +22,7 @@ class Agent(object):
         self.tau = cfg["TAU"]
 
     def learn(self):
-        if self.replay_buffer.cur_buffer_size > self.replay_buffer.batch_size:
+        if self.replay_buffer.cur_buffer_size > (self.replay_buffer.max_buffer_size*0.75):
             # Get experiences from replay buffer
             state, action, reward, new_state = self.replay_buffer.sample()
 
