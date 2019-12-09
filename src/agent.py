@@ -25,24 +25,21 @@ class Agent(object):
             state, action, reward, new_state = self.replay_buffer.sample()
 
             # Calculate targets
-            target_values = self.critic.predict(new_state, self.actor.predict(new_state))
+            target_values = self.critic.predict(new_state,
+                                                self.actor.predict(new_state, use_target=True),
+                                                use_target=True)
             target = reward + self.gamma * target_values.flatten()
 
             # Update critic
             self.critic.update(state, action, target)
 
             # Get actions from Actor with old states
-            a_output = tf.convert_to_tensor(self.actor.predict(state))
+            a_output = tf.convert_to_tensor(self.actor.predict(state, use_target=False))
 
             # Get Gradient from critic
-            # <TODO>
-            # This method
             gradient_critic = self.critic.get_gradients(state, a_output)
 
             # Apply gradient to actor network
             # <TODO>
 
             # Update target networks
-            # Target networks (basically just weights) still have to be initialized
-            # and of course be updated
-            # <TODO>

@@ -14,6 +14,7 @@ class Actor(object):
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
         self.network = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
+        self.target = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
         self.optimizer = Adam(learning_rate=cfg["ACTOR_LEARNING_RATE"])
 
     def build(self, observation_space: int, action_space: int, layer_sizes: list)\
@@ -32,15 +33,17 @@ class Actor(object):
                 model.add(Activation("relu"))
 
         model.add(Dense(action_space, kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3)))
-        model.add(Activation("linear"))
+        model.add(Activation("tanh"))
 
         return model
 
-    def predict(self, state: np.ndarray) -> np.ndarray:
-        # <TODO>
-        # ADD NOISE
-        # HAVE A LOOK AT Ornstein Uhlenbeck Action Noise!
-        return self.network.predict(state)
+    def predict(self, state: np.ndarray, use_target: bool) -> np.ndarray:
+        if use_target:
+            predictions = self.target.predict(state)
+        else:
+            predictions = self.network.predict(state)
+        noise = np.random.normal(0, 0.1, predictions.shape)
+        return predictions + noise
 
     def update(self):
         pass
@@ -54,6 +57,7 @@ class Critic(object):
         self.loss = mean_squared_error
         self.optimizer = Adam(learning_rate=cfg["CRITIC_LEARNING_RATE"])
         self.network = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
+        self.target = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
 
     def build(self, observation_space: int, action_space: int, layer_sizes: list)\
             -> Sequential:
@@ -78,9 +82,12 @@ class Critic(object):
 
         return model
 
-    def predict(self, state: np.ndarray, action: np.ndarray) -> np.ndarray:
+    def predict(self, state: np.ndarray, action: np.ndarray, use_target: bool) -> np.ndarray:
         net_input = np.hstack([state, action])
-        return self.network.predict(net_input)
+        if use_target:
+            return self.target.predict(net_input)
+        else:
+            return self.network.predict(net_input)
 
     def update(self, state: np.ndarray, action: np.ndarray, target: np.ndarray):
         net_input = np.hstack([state, action])

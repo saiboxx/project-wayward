@@ -28,7 +28,7 @@ def main():
     acc_reward = 0
     mean_reward = 0
     for steps in range(cfg["STEPS"]):
-        action = agent.actor.predict(state)
+        action = agent.actor.predict(state, use_target=False)
         info = env.step(action)
         brain_info = info[env.external_brain_names[0]]
         new_state = brain_info.vector_observations
