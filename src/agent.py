@@ -1,4 +1,5 @@
 import yaml
+import numpy as np
 import tensorflow as tf
 
 from src.networks import Actor, Critic
@@ -18,6 +19,7 @@ class Agent(object):
         self.critic = Critic(observation_space, action_space)
         self.replay_buffer = ReplayBuffer()
         self.gamma = cfg["GAMMA"]
+        self.tau = cfg["TAU"]
 
     def learn(self):
         if self.replay_buffer.cur_buffer_size > self.replay_buffer.batch_size:
@@ -31,15 +33,22 @@ class Agent(object):
             target = reward + self.gamma * target_values.flatten()
 
             # Update critic
-            self.critic.update(state, action, target)
+            self.critic.update_network(state, action, target)
 
             # Get actions from Actor with old states
-            a_output = tf.convert_to_tensor(self.actor.predict(state, use_target=False))
+            a_output = self.actor.predict(state, use_target=False)
 
             # Get Gradient from critic
-            gradient_critic = self.critic.get_gradients(state, a_output)
+            with tf.GradientTape() as tape:
+                next_action = self.actor.network(state)
+                actor_loss = -tf.reduce_mean(self.critic.network([state, next_action]))
 
+            actor_grad = tape.gradient(actor_loss, self.actor.network.trainable_variables)
+
+            print(actor_grad)
             # Apply gradient to actor network
-            # <TODO>
+            #self.actor.update_network(gradient_critic)
 
             # Update target networks
+            #self.actor.update_target(self.tau)
+            #self.critic.update_target(self.tau)

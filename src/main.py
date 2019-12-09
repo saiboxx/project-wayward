@@ -37,11 +37,10 @@ def main():
         agent.learn()
 
         acc_reward += sum(brain_info.rewards) / len(brain_info.rewards)
-        mean_reward += sum(brain_info.rewards) / len(brain_info.rewards)
+        mean_reward = sum(brain_info.rewards) / len(brain_info.rewards)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
-            print("Mean reward with {0} steps: {1:.5f}".format(steps, acc_reward))
-            mean_reward = 0
+            print("Mean reward with {0} steps: {1:.5f}".format(steps, mean_reward))
 
         state = new_state
 

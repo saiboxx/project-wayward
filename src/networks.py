@@ -1,8 +1,8 @@
 import yaml
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Activation
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Concatenate, Dense, Activation
 from tensorflow.keras.initializers import RandomUniform
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import mean_squared_error
@@ -18,22 +18,23 @@ class Actor(object):
         self.optimizer = Adam(learning_rate=cfg["ACTOR_LEARNING_RATE"])
 
     def build(self, observation_space: int, action_space: int, layer_sizes: list)\
-            -> Sequential:
+            -> Model:
         """
         Builds Actor Network.
         """
-        model = Sequential()
+        input = Input(observation_space)
 
-        model.add(Dense(layer_sizes[0], input_dim=observation_space))
-        model.add(Activation("relu"))
+        dense1 = Dense(layer_sizes[0], kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(input)
+        activation1 = Activation("relu")(dense1)
+        dense2 = Dense(layer_sizes[1], kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(activation1)
+        activation2 = Activation("relu")(dense2)
+        dense3 = Dense(layer_sizes[2], kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(activation2)
+        activation3 = Activation("relu")(dense3)
 
-        if len(layer_sizes) > 1:
-            for layer_size in layer_sizes[1:]:
-                model.add(Dense(layer_size, kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3)))
-                model.add(Activation("relu"))
+        output = Dense(action_space, kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(activation3)
+        activation_out = Activation("tanh")(output)
 
-        model.add(Dense(action_space, kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3)))
-        model.add(Activation("tanh"))
+        model = Model(inputs=input, outputs=activation_out)
 
         return model
 
@@ -45,8 +46,12 @@ class Actor(object):
         noise = np.random.normal(0, 0.1, predictions.shape)
         return predictions + noise
 
-    def update(self):
-        pass
+    def update_network(self, gradients: tf.Tensor):
+        self.optimizer.apply_gradients(zip())
+
+    def update_target(self, tau: float):
+        new_weights = self.target.get_weights() * tau + self.network.get_weights() * (1 - tau)
+        self.target.set_weights(new_weights)
 
 
 class Critic(object):
@@ -60,40 +65,47 @@ class Critic(object):
         self.target = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
 
     def build(self, observation_space: int, action_space: int, layer_sizes: list)\
-            -> Sequential:
+            -> Model:
         """
-        Builds Actor Network.
+        Builds Critic Network.
         """
 
-        model = Sequential()
+        input1 = Input(observation_space)
+        input2 = Input(action_space)
 
-        model.add(Dense(layer_sizes[0], input_dim=(observation_space + action_space)))
-        model.add(Activation("relu"))
+        concat_layer = Concatenate()([input1, input2])
+        dense1 = Dense(layer_sizes[0], kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(concat_layer)
+        activation1 = Activation("relu")(dense1)
+        dense2 = Dense(layer_sizes[1], kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(activation1)
+        activation2 = Activation("relu")(dense2)
+        dense3 = Dense(layer_sizes[2], kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(activation2)
+        activation3 = Activation("relu")(dense3)
 
-        if len(layer_sizes) > 1:
-            for layer_size in layer_sizes[1:]:
-                model.add(Dense(layer_size, kernel_initializer=RandomUniform(minval=-0.003, maxval=0.003)))
-                model.add(Activation("relu"))
+        output = Dense(1, kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(activation3)
+        activation_out = Activation("linear")(output)
 
-        model.add(Dense(1, kernel_initializer=RandomUniform(minval=-0.003, maxval=0.003)))
-        model.add(Activation("linear"))
+        model = Model(inputs=[input1, input2], outputs=output)
 
         model.compile(loss=self.loss, optimizer=self.optimizer)
 
         return model
 
     def predict(self, state: np.ndarray, action: np.ndarray, use_target: bool) -> np.ndarray:
-        net_input = np.hstack([state, action])
         if use_target:
-            return self.target.predict(net_input)
+            return self.target.predict([state, action])
         else:
-            return self.network.predict(net_input)
+            return self.network.predict([state, action])
 
-    def update(self, state: np.ndarray, action: np.ndarray, target: np.ndarray):
-        net_input = np.hstack([state, action])
-        self.network.fit(net_input, target, batch_size=len(target), verbose=0)
+    def update_network(self, state: np.ndarray, action: np.ndarray, target: np.ndarray):
+        self.network.fit([state, action], target, batch_size=len(target), verbose=0)
 
-    def get_gradients(self, state: np.ndarray, a_output: np.ndarray):
-        pass
-        # <TODO>
-        # Get gradients w.r.t. a_output
+    def update_target(self, tau: float):
+        new_weights = self.target.get_weights() * tau + self.network.get_weights() * (1 - tau)
+        self.target.set_weights(new_weights)
+
+    def get_gradients(self, state: np.ndarray):
+        with tf.GradientTape() as tape:
+            a_out = self.network.predict(state)
+            loss = -tf.reduce_mean(self.critic(np.hstack([state, a_out])))
+
+        actor_grad = tape.gradient(loss, self.actor.trainable_variables)
