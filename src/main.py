@@ -1,5 +1,7 @@
 import os
 import yaml
+import time
+import datetime
 from mlagents.envs.environment import UnityEnvironment
 import numpy as np
 
@@ -30,6 +32,7 @@ def main():
     reward_cur_episode = []
     mean_reward_episodes = 0
     episode = 1
+    start_time = time.time()
     for steps in range(cfg["STEPS"]):
         action = agent.actor.predict(state, use_target=False)
         info = env.step(action)
@@ -44,11 +47,12 @@ def main():
         acc_reward += mean_step
         mean_reward += mean_step
         reward_cur_episode.append(brain_info.rewards[0])
-
+        
         if steps % cfg["VERBOSE_STEPS"] == 0:
             mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
-            print("Ep {0} with {1} steps total : {2:.3f} mean ep. reward; {3:.3f} step reward"\
-                  .format(episode, steps, mean_reward_episodes, mean_reward))
+            elapsed_time = time.time() - start_time
+            print("Ep {0:>4} with {1:>7} steps total; {2:8.3f} mean ep. reward; {3:+.3f} step reward; {4}h elapsed"\
+                    .format(episode, steps, mean_reward_episodes, mean_reward, format_timedelta(elapsed_time)))
             mean_reward = 0
 
         if done:
@@ -59,7 +63,7 @@ def main():
             new_state = brain_info.vector_observations
 
         state = new_state
-
+        
     print("Closing environment.")
     env.close()
 
@@ -74,6 +78,15 @@ def load_environment(env_name: str) -> UnityEnvironment:
                 if os.path.isfile(os.path.join(env_path, f))][0]
     return UnityEnvironment(file_name=env_file)
 
+def predict_total_time(time_elapsed, episodes_elapsed, episodes_total):
+    time_per_episode = time_elapsed / episodes_elapsed
+    return episodes_total * time_per_episode
+
+def format_timedelta(timedelta):
+    total_seconds = int(timedelta)
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return '{:0>2d}:{:0>2d}:{:0>2d}'.format(hours, minutes, seconds)
 
 if __name__ == '__main__':
     main()
