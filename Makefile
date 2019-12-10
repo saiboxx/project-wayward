@@ -9,6 +9,10 @@ requirements:
 train:
 	$(PYTHON_INTERPRETER) src/main.py
 
+## Load a model and observe agent
+run:
+	$(PYTHON_INTERPRETER) src/run.py
+
 ## Set up python interpreter environment
 create_environment:
 ifeq (True,$(HAS_CONDA))

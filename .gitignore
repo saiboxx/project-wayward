@@ -90,3 +90,4 @@ target/
 .mypy_cache/
 executables
 csharp_timers.json
+models/

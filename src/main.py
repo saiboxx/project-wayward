@@ -14,7 +14,7 @@ def main():
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
-    env = load_environment(cfg["EXECUTABLE"])
+    env = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"])
     info = env.reset()
     brain_info = info[env.external_brain_names[0]]
     observation_space = brain_info.vector_observations.shape[1]
@@ -45,12 +45,12 @@ def main():
         acc_reward += mean_step
         mean_reward += mean_step
         reward_cur_episode.append(brain_info.rewards[0])
-        
+
         if steps % cfg["VERBOSE_STEPS"] == 0:
             mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
-            print("Ep {0:>4} with {1:>7} steps total; {2:8.3f} mean ep. reward; {3:+.3f} step reward; {4}h elapsed"\
-                    .format(episode, steps, mean_reward_episodes, mean_reward, format_timedelta(elapsed_time)))
+            print("Ep {0:>4} with {1:>7} steps total; {2:8.3f} mean ep. reward; {3:+.3f} step reward; {4}h elapsed" \
+                  .format(episode, steps, mean_reward_episodes, mean_reward, format_timedelta(elapsed_time)))
             mean_reward = 0
 
         if done:
@@ -61,12 +61,16 @@ def main():
             new_state = brain_info.vector_observations
 
         state = new_state
-        
+
+        if steps % cfg["CHECKPOINTS"] == 0:
+            print("CHECKPOINT: Saving Models.")
+            agent.save_models(steps)
+
     print("Closing environment.")
     env.close()
 
 
-def load_environment(env_name: str) -> UnityEnvironment:
+def load_environment(env_name: str, no_graphics: bool) -> UnityEnvironment:
     """
     Loads a Unity environment with a given key name.
     """
@@ -74,7 +78,7 @@ def load_environment(env_name: str) -> UnityEnvironment:
     files_in_dir = os.listdir(env_path)
     env_file = [os.path.join(env_path, f) for f in files_in_dir
                 if os.path.isfile(os.path.join(env_path, f))][0]
-    return UnityEnvironment(file_name=env_file)
+    return UnityEnvironment(file_name=env_file, no_graphics=no_graphics)
 
 
 def predict_total_time(time_elapsed, episodes_elapsed, episodes_total):

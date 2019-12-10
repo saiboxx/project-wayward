@@ -4,6 +4,8 @@
 EXECUTABLE: crawler
 STEPS: 2000000
 VERBOSE_STEPS: 100
+CHECKPOINTS: 2000
+NO_GRAPHICS: True
 
 BUFFER_SIZE: 10000
 BATCH_SIZE: 512
@@ -20,10 +22,11 @@ LAYER_SIZES:
   - 64
   - 32
 
+
 ###############################################################################
 # SET PARAMETERS FOR RUN
 ###############################################################################
 RUN_EXECUTABLE: crawler
-RUN_MODEL:
-RUN_EPISODES: 100
+RUN_MODEL: models/crawler/actor_target_900.h5
+RUN_EPISODES: 1000
 VERBOSE_EPISODES: 5

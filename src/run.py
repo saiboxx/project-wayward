@@ -3,7 +3,6 @@ import yaml
 import time
 import tensorflow as tf
 from mlagents.envs.environment import UnityEnvironment
-from mlagents.envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
 
 def main():
@@ -15,7 +14,7 @@ def main():
 
     print("Loading environment {}.".format(cfg["RUN_EXECUTABLE"]))
     env = load_environment(cfg["RUN_EXECUTABLE"])
-    info = env.reset()
+    info = env.reset(train_mode=False)
     brain_info = info[env.external_brain_names[0]]
     state = brain_info.vector_observations
 
@@ -52,7 +51,7 @@ def main():
         if done:
             mean_reward_episodes += (sum(reward_cur_episode) - mean_reward_episodes) / episode
             episode += 1
-            info = env.reset()
+            info = env.reset(train_mode=False)
             brain_info = info[env.external_brain_names[0]]
             new_state = brain_info.vector_observations
 
@@ -73,13 +72,8 @@ def load_environment(env_name: str) -> UnityEnvironment:
     files_in_dir = os.listdir(env_path)
     env_file = [os.path.join(env_path, f) for f in files_in_dir
                 if os.path.isfile(os.path.join(env_path, f))][0]
-    channel = EngineConfigurationChannel()
-    UnityEnvironment( )
     env = UnityEnvironment(file_name=env_file)
-    channel.set_configuration_parameters(time_scale=2.0)
     return env
-
-
 
 
 def format_timedelta(timedelta):

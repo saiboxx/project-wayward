@@ -1,3 +1,4 @@
+import os
 import yaml
 import tensorflow as tf
 
@@ -14,14 +15,17 @@ class Agent(object):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
+        tf.get_logger().setLevel("ERROR")
+
         self.actor = Actor(observation_space, action_space)
         self.critic = Critic(observation_space, action_space)
         self.replay_buffer = ReplayBuffer()
         self.gamma = cfg["GAMMA"]
         self.tau = cfg["TAU"]
+        self.output_path = os.path.join("models", cfg["EXECUTABLE"])
 
     def learn(self):
-        if self.replay_buffer.cur_buffer_size > (self.replay_buffer.max_buffer_size*0.75):
+        if self.replay_buffer.cur_buffer_size > (self.replay_buffer.max_buffer_size * 0.75):
             # Get experiences from replay buffer
             state, action, reward, new_state = self.replay_buffer.sample()
 
@@ -51,3 +55,10 @@ class Agent(object):
             # Update target networks
             self.actor.update_target(self.tau)
             self.critic.update_target(self.tau)
+
+    def save_models(self, steps: int):
+        os.makedirs(self.output_path, exist_ok=True)
+        self.actor.network.save(os.path.join(self.output_path, ("actor_" + str(steps) + ".h5")))
+        self.actor.target.save(os.path.join(self.output_path, ("actor_target_" + str(steps) + ".h5")))
+        self.critic.network.save(os.path.join(self.output_path, ("critic_" + str(steps) + ".h5")))
+        self.critic.target.save(os.path.join(self.output_path, ("critic_target" + str(steps) + ".h5")))
