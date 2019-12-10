@@ -27,6 +27,6 @@ LAYER_SIZES:
 # SET PARAMETERS FOR RUN
 ###############################################################################
 RUN_EXECUTABLE: crawler
-RUN_MODEL: models/crawler/actor_target_900.h5
+RUN_MODEL: models/crawler/actor_target_10000.h5
 RUN_EPISODES: 1000
 VERBOSE_EPISODES: 5

@@ -14,7 +14,8 @@ def main():
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
-    env = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"])
+    worker_id = 0
+    env = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
     info = env.reset()
     brain_info = info[env.external_brain_names[0]]
     observation_space = brain_info.vector_observations.shape[1]
@@ -61,17 +62,25 @@ def main():
             brain_info = info[env.external_brain_names[0]]
             new_state = brain_info.vector_observations
 
-        state = new_state
-
         if steps % cfg["CHECKPOINTS"] == 0:
             print("CHECKPOINT: Saving Models.")
             agent.save_models(steps)
+
+        if steps % 10000 == 0:
+            worker_id += 1
+            env.close()
+            env = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
+            info = env.reset()
+            brain_info = info[env.external_brain_names[0]]
+            new_state = brain_info.vector_observations
+
+        state = new_state
 
     print("Closing environment.")
     env.close()
 
 
-def load_environment(env_name: str, no_graphics: bool) -> UnityEnvironment:
+def load_environment(env_name: str, no_graphics: bool, worker_id: int) -> UnityEnvironment:
     """
     Loads a Unity environment with a given key name.
     """
@@ -79,7 +88,7 @@ def load_environment(env_name: str, no_graphics: bool) -> UnityEnvironment:
     files_in_dir = os.listdir(env_path)
     env_file = [os.path.join(env_path, f) for f in files_in_dir
                 if os.path.isfile(os.path.join(env_path, f))][0]
-    return UnityEnvironment(file_name=env_file, no_graphics=no_graphics)
+    return UnityEnvironment(file_name=env_file, no_graphics=no_graphics, worker_id=worker_id)
 
 
 def predict_total_time(time_elapsed, episodes_elapsed, episodes_total):

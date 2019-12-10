@@ -50,6 +50,7 @@ def main():
 
         if done:
             mean_reward_episodes += (sum(reward_cur_episode) - mean_reward_episodes) / episode
+            reward_cur_episode = []
             episode += 1
             info = env.reset(train_mode=False)
             brain_info = info[env.external_brain_names[0]]
@@ -72,7 +73,7 @@ def load_environment(env_name: str) -> UnityEnvironment:
     files_in_dir = os.listdir(env_path)
     env_file = [os.path.join(env_path, f) for f in files_in_dir
                 if os.path.isfile(os.path.join(env_path, f))][0]
-    env = UnityEnvironment(file_name=env_file)
+    env = UnityEnvironment(file_name=env_file, worker_id=2)
     return env
 
 
