@@ -1,5 +1,4 @@
 import yaml
-import numpy as np
 import tensorflow as tf
 
 from src.networks import Actor, Critic

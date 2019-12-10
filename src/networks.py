@@ -2,8 +2,8 @@ import yaml
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Concatenate, Dense, Activation
-from tensorflow.keras.initializers import RandomUniform
+from tensorflow.keras.layers import Input, Concatenate, Dense, LeakyReLU, Activation
+from tensorflow.keras.initializers import he_normal
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import mean_squared_error
 
@@ -24,14 +24,14 @@ class Actor(object):
         """
         input = Input(observation_space)
 
-        dense1 = Dense(layer_sizes[0], kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(input)
-        activation1 = Activation("relu")(dense1)
-        dense2 = Dense(layer_sizes[1], kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(activation1)
-        activation2 = Activation("relu")(dense2)
-        dense3 = Dense(layer_sizes[2], kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(activation2)
-        activation3 = Activation("relu")(dense3)
+        dense1 = Dense(layer_sizes[0], kernel_initializer=he_normal())(input)
+        activation1 = LeakyReLU()(dense1)
+        dense2 = Dense(layer_sizes[1], kernel_initializer=he_normal())(activation1)
+        activation2 = LeakyReLU()(dense2)
+        dense3 = Dense(layer_sizes[2], kernel_initializer=he_normal())(activation2)
+        activation3 = LeakyReLU()(dense3)
 
-        output = Dense(action_space, kernel_initializer=RandomUniform(minval=-0.03, maxval=0.03))(activation3)
+        output = Dense(action_space, kernel_initializer=he_normal())(activation3)
         activation_out = Activation("tanh")(output)
 
         model = Model(inputs=input, outputs=activation_out)
@@ -71,17 +71,17 @@ class Critic(object):
         input2 = Input(action_space)
 
         concat_layer = Concatenate()([input1, input2])
-        dense1 = Dense(layer_sizes[0], kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(concat_layer)
-        activation1 = Activation("relu")(dense1)
-        dense2 = Dense(layer_sizes[1], kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(activation1)
-        activation2 = Activation("relu")(dense2)
-        dense3 = Dense(layer_sizes[2], kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(activation2)
-        activation3 = Activation("relu")(dense3)
+        dense1 = Dense(layer_sizes[0], kernel_initializer=he_normal())(concat_layer)
+        activation1 = LeakyReLU()(dense1)
+        dense2 = Dense(layer_sizes[1], kernel_initializer=he_normal())(activation1)
+        activation2 = LeakyReLU()(dense2)
+        dense3 = Dense(layer_sizes[2], kernel_initializer=he_normal())(activation2)
+        activation3 = LeakyReLU()(dense3)
 
-        output = Dense(1, kernel_initializer=RandomUniform(minval=-0.3, maxval=0.3))(activation3)
+        output = Dense(1, kernel_initializer=he_normal())(activation3)
         activation_out = Activation("linear")(output)
 
-        model = Model(inputs=[input1, input2], outputs=output)
+        model = Model(inputs=[input1, input2], outputs=activation_out)
 
         model.compile(loss=self.loss, optimizer=self.optimizer)
 
