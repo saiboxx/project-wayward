@@ -1,56 +1,52 @@
 import os
 import yaml
 import time
+import tensorflow as tf
 from mlagents.envs.environment import UnityEnvironment
-
-from src.agent import Agent
+from mlagents.envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
 
 def main():
-    """"
-    <TBD>
+    """
+    Loads network specified in cfg file and runs Unity Environment
     """
     with open("config.yml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-    print("Loading environment {}.".format(cfg["EXECUTABLE"]))
-    env = load_environment(cfg["EXECUTABLE"])
+    print("Loading environment {}.".format(cfg["RUN_EXECUTABLE"]))
+    env = load_environment(cfg["RUN_EXECUTABLE"])
     info = env.reset()
     brain_info = info[env.external_brain_names[0]]
-    observation_space = brain_info.vector_observations.shape[1]
-    action_space = brain_info.action_masks.shape[1]
     state = brain_info.vector_observations
 
-    print("Creating Agent.")
-    agent = Agent(observation_space, action_space)
+    print("Loading Model.")
+    actor = tf.keras.models.load_model(cfg["RUN_MODEL"])
 
-    print("Starting training with {} steps.".format(cfg["STEPS"]))
+    print("Starting Run with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
     mean_reward = 0
     reward_cur_episode = []
     mean_reward_episodes = 0
     episode = 1
+    steps = 1
     start_time = time.time()
-    for steps in range(cfg["STEPS"]):
-        action = agent.actor.predict(state, use_target=False)
+    while True:
+        action = actor.predict(state)
         info = env.step(action)
         brain_info = info[env.external_brain_names[0]]
         new_state = brain_info.vector_observations
-        reward = brain_info.rewards
         done = brain_info.local_done[0]
-        agent.replay_buffer.add(state, action, reward, new_state)
-        agent.learn()
 
         mean_step = sum(brain_info.rewards) / len(brain_info.rewards)
         acc_reward += mean_step
         mean_reward += mean_step
         reward_cur_episode.append(brain_info.rewards[0])
-        
-        if steps % cfg["VERBOSE_STEPS"] == 0:
-            mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
+
+        if episode % cfg["VERBOSE_EPISODES"] == 0:
+            mean_reward = mean_reward / cfg["VERBOSE_EPISODES"]
             elapsed_time = time.time() - start_time
-            print("Ep {0:>4} with {1:>7} steps total; {2:8.3f} mean ep. reward; {3:+.3f} step reward; {4}h elapsed"\
-                    .format(episode, steps, mean_reward_episodes, mean_reward, format_timedelta(elapsed_time)))
+            print("Ep {0:>4} with {1:>7} steps total; {2:8.3f} mean ep. reward; {3:+.3f} step reward; {4}h elapsed" \
+                  .format(episode, steps, mean_reward_episodes, mean_reward, format_timedelta(elapsed_time)))
             mean_reward = 0
 
         if done:
@@ -60,8 +56,11 @@ def main():
             brain_info = info[env.external_brain_names[0]]
             new_state = brain_info.vector_observations
 
+        if episode >= cfg["RUN_EPISODES"]:
+            break
         state = new_state
-        
+        steps += 1
+
     print("Closing environment.")
     env.close()
 
@@ -74,12 +73,13 @@ def load_environment(env_name: str) -> UnityEnvironment:
     files_in_dir = os.listdir(env_path)
     env_file = [os.path.join(env_path, f) for f in files_in_dir
                 if os.path.isfile(os.path.join(env_path, f))][0]
-    return UnityEnvironment(file_name=env_file)
+    channel = EngineConfigurationChannel()
+    UnityEnvironment( )
+    env = UnityEnvironment(file_name=env_file)
+    channel.set_configuration_parameters(time_scale=2.0)
+    return env
 
 
-def predict_total_time(time_elapsed, episodes_elapsed, episodes_total):
-    time_per_episode = time_elapsed / episodes_elapsed
-    return episodes_total * time_per_episode
 
 
 def format_timedelta(timedelta):
