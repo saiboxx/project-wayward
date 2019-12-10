@@ -40,9 +40,9 @@ class Actor(object):
 
     def predict(self, state: np.ndarray, use_target: bool) -> np.ndarray:
         if use_target:
-            predictions = self.target.predict(state)
+            predictions = np.array(self.target.predict_on_batch(state))
         else:
-            predictions = self.network.predict(state)
+            predictions = np.array(self.network.predict_on_batch(state))
         noise = np.random.normal(0, 0.1, predictions.shape)
         return predictions + noise
 
@@ -89,12 +89,12 @@ class Critic(object):
 
     def predict(self, state: np.ndarray, action: np.ndarray, use_target: bool) -> np.ndarray:
         if use_target:
-            return self.target.predict([state, action])
+            return np.array(self.target.predict_on_batch([state, action]))
         else:
-            return self.network.predict([state, action])
+            return np.array(self.network.predict_on_batch([state, action]))
 
     def update_network(self, state: np.ndarray, action: np.ndarray, target: np.ndarray):
-        self.network.fit([state, action], target, batch_size=len(target), verbose=0)
+        self.network.train_on_batch([state, action], target)
 
     def update_target(self, tau: float):
         new_weights = np.array(self.target.get_weights()) * tau + np.array(self.network.get_weights()) * (1 - tau)
