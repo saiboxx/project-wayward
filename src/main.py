@@ -29,7 +29,6 @@ def main():
     acc_reward = 0
     mean_reward = 0
     reward_cur_episode = []
-    mean_reward_episodes = 0
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
@@ -50,12 +49,12 @@ def main():
         if steps % cfg["VERBOSE_STEPS"] == 0:
             mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
-            print("Ep {0:>4} with {1:>7} steps total; {2:8.2f} mean ep. reward; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, mean_reward_episodes, mean_reward, format_timedelta(elapsed_time)))
+            print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. reward; {3:+.3f} step reward; {4}h elapsed" \
+                  .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
             mean_reward = 0
 
         if done:
-            mean_reward_episodes += (sum(reward_cur_episode) - mean_reward_episodes) / episode
+            reward_last_episode = sum(reward_cur_episode)
             reward_cur_episode = []
             episode += 1
             info = env.reset()
