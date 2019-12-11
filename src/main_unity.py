@@ -29,6 +29,7 @@ def main():
     acc_reward = 0
     mean_reward = 0
     reward_cur_episode = []
+    reward_last_episode = 0
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):

@@ -2,25 +2,25 @@
 # SET PARAMETERS FOR TRAINING
 ###############################################################################
 EXECUTABLE: crawler
-STEPS: 100000
+STEPS: 200000
 VERBOSE_STEPS: 100
 CHECKPOINTS: 10000
-NO_GRAPHICS: True
+NO_GRAPHICS: False
 
-BUFFER_SIZE: 1000
+BUFFER_SIZE: 10000
 BATCH_SIZE: 32
 
-ACTOR_LEARNING_RATE: 0.001
-CRITIC_LEARNING_RATE: 0.001
+ACTOR_LEARNING_RATE: 0.003
+CRITIC_LEARNING_RATE: 0.003
 
 TAU: 0.99
 GAMMA: 0.99
 
 
 LAYER_SIZES:
-  - 128
   - 64
   - 32
+  - 16
 
 
 ###############################################################################

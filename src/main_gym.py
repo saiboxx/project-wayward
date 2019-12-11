@@ -19,9 +19,6 @@ def main():
     observation_space = env.observation_space.shape[0]
     action_space = env.action_space.shape[0]
     state = np.zeros((1, observation_space))
-    print(state.shape)
-    print(state)
-    print(env.action_space.sample().shape)
 
     print("Creating Agent.")
     agent = Agent(observation_space, action_space)
@@ -58,10 +55,6 @@ def main():
             episode += 1
             env.reset()
             state = np.zeros((1, observation_space))
-
-        if steps % cfg["CHECKPOINTS"] == 0:
-            print("CHECKPOINT: Saving Models.")
-            agent.save_models(steps)
 
         state = new_state
 

@@ -25,7 +25,7 @@ class Agent(object):
         self.output_path = os.path.join("models", cfg["EXECUTABLE"])
 
     def learn(self):
-        if self.replay_buffer.cur_buffer_size > (self.replay_buffer.max_buffer_size * 0.75):
+        if self.replay_buffer.cur_buffer_size > (self.replay_buffer.max_buffer_size * 0.25):
             # Get experiences from replay buffer
             state, action, reward, new_state = self.replay_buffer.sample()
 
