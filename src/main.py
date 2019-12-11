@@ -32,7 +32,7 @@ def main():
     mean_reward_episodes = 0
     episode = 1
     start_time = time.time()
-    for steps in range(cfg["STEPS"]):
+    for steps in range(1, cfg["STEPS"]):
         action = agent.actor.predict(state, use_target=False)
         info = env.step(action)
         brain_info = info[env.external_brain_names[0]]
