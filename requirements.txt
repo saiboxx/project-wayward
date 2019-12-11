@@ -1,6 +1,7 @@
 mlagents
 numpy
 tensorflow-gpu
+gym
 
 # local package
 -e .

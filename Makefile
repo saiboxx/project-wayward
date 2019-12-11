@@ -7,7 +7,11 @@ requirements:
 
 ## Start training an agent
 train:
-	$(PYTHON_INTERPRETER) src/main.py
+	$(PYTHON_INTERPRETER) src/main_unity.py
+
+## Start training an agent in a gym dummy environment
+mock:
+	$(PYTHON_INTERPRETER) src/main_gym.py
 
 ## Load a model and observe agent
 run:
