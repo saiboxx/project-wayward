@@ -44,7 +44,7 @@ class Actor(object):
             return predictions
         else:
             predictions = np.array(self.network.predict_on_batch(state))
-            noise = np.random.normal(0, 0.2, predictions.shape)
+            noise = np.random.normal(0, 0.1, predictions.shape)
         return predictions + noise
 
     def update_target(self, tau: float):

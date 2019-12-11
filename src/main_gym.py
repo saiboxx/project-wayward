@@ -2,6 +2,7 @@ import os
 import yaml
 import time
 import gym
+import numpy as np
 from src.agent import Agent
 
 
@@ -13,12 +14,17 @@ def main():
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
-    worker_id = 0
     env = gym.make("LunarLanderContinuous-v2")
-    state, reward, done, info = env.reset()
+    env.reset()
+    observation_space = env.observation_space.shape[0]
+    action_space = env.action_space.shape[0]
+    state = np.zeros((1, observation_space))
+    print(state.shape)
+    print(state)
+    print(env.action_space.sample().shape)
 
     print("Creating Agent.")
-    agent = Agent(env.observation_space, env.action_space)
+    agent = Agent(observation_space, action_space)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
@@ -29,7 +35,9 @@ def main():
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
         action = agent.actor.predict(state, use_target=False)
-        new_state, reward, done, info = env.step(action)
+        env.render()
+        new_state, reward, done, info = env.step(np.reshape(action, action_space))
+        new_state = np.reshape(new_state, (1, observation_space))
         agent.replay_buffer.add(state, action, reward, new_state)
         agent.learn()
 
@@ -48,7 +56,8 @@ def main():
             reward_last_episode = sum(reward_cur_episode)
             reward_cur_episode = []
             episode += 1
-            new_state, reward, done, info = env.step(action)
+            env.reset()
+            state = np.zeros((1, observation_space))
 
         if steps % cfg["CHECKPOINTS"] == 0:
             print("CHECKPOINT: Saving Models.")
