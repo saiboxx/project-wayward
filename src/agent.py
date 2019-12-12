@@ -1,8 +1,9 @@
 import os
 import yaml
-import tensorflow as tf
+import torch
+from torch import from_numpy
 
-from src.networks import Actor, Critic
+from src.actor_critic import Actor, Critic
 from src.replay_buffer import ReplayBuffer
 
 
@@ -14,8 +15,6 @@ class Agent(object):
     def __init__(self, observation_space: int, action_space: int):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
-
-        tf.get_logger().setLevel("ERROR")
 
         self.actor = Actor(observation_space, action_space)
         self.critic = Critic(observation_space, action_space)
@@ -29,25 +28,28 @@ class Agent(object):
             # Get experiences from replay buffer
             state, action, reward, new_state = self.replay_buffer.sample()
 
+            state = from_numpy(state).float()
+            action = from_numpy(action).float()
+            reward = from_numpy(reward).float()
+            new_state = from_numpy(new_state).float()
+
             # Calculate targets
             target_values = self.critic.predict(new_state,
                                                 self.actor.predict(new_state, use_target=True),
                                                 use_target=True)
-            target = reward + self.gamma * target_values.flatten()
+
+            target = reward.unsqueeze(1) + self.gamma * target_values
 
             # Update critic
             self.critic.update_network(state, action, target)
 
-            # Get Gradient from critic
-            with tf.GradientTape() as tape:
-                action = self.actor.network(state)
-                loss = -tf.reduce_mean(self.critic.network([state, action]))
-
-            actor_grad = tape.gradient(loss, self.actor.network.trainable_variables)
-
-            # Apply gradient to actor network
-            self.actor.optimizer.apply_gradients(zip(actor_grad,
-                                                     self.actor.network.trainable_variables))
+            # Get Gradient from critic and apply to actor
+            a_pred = self.actor.network(state)
+            loss = self.critic.network(state, a_pred)
+            mean_loss = -1 * loss.mean()
+            self.actor.optimizer.zero_grad()
+            mean_loss.backward()
+            self.actor.optimizer.step()
 
             # Update target networks
             self.actor.update_target(self.tau)
@@ -55,7 +57,7 @@ class Agent(object):
 
     def save_models(self, steps: int):
         os.makedirs(self.output_path, exist_ok=True)
-        self.actor.network.save(os.path.join(self.output_path, ("actor_" + str(steps) + ".h5")))
-        self.actor.target.save(os.path.join(self.output_path, ("actor_target_" + str(steps) + ".h5")))
-        self.critic.network.save(os.path.join(self.output_path, ("critic_" + str(steps) + ".h5")))
-        self.critic.target.save(os.path.join(self.output_path, ("critic_target" + str(steps) + ".h5")))
+        torch.save(self.actor.network, os.path.join(self.output_path, ("actor_" + str(steps) + ".pt")))
+        torch.save(self.actor.target, os.path.join(self.output_path, ("actor_target_" + str(steps) + ".pt")))
+        torch.save(self.critic.network, os.path.join(self.output_path, ("critic_" + str(steps) + ".pt")))
+        torch.save(self.critic.target, os.path.join(self.output_path, ("critic_target" + str(steps) + ".pt")))
