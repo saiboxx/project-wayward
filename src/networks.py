@@ -16,6 +16,8 @@ class Actor(object):
         self.network = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
         self.target = self.build(observation_space, action_space, cfg["LAYER_SIZES"])
         self.optimizer = Adam(learning_rate=cfg["ACTOR_LEARNING_RATE"])
+        self.noise = cfg["NOISE_START"]
+        self.noise_steps = cfg["NOISE_START"] / (cfg["STEPS"] * cfg["NOISE_DECAY"])
 
     def build(self, observation_space: int, action_space: int, layer_sizes: list)\
             -> Model:
@@ -44,8 +46,11 @@ class Actor(object):
             return predictions
         else:
             predictions = np.array(self.network.predict_on_batch(state))
-            noise = np.random.normal(0, 0.1, predictions.shape)
-        return predictions + noise
+            if self.noise > 0:
+                noise = np.random.normal(0, self.noise, predictions.shape)
+                self.noise -= self.noise_steps
+                return predictions + noise
+        return predictions
 
     def update_target(self, tau: float):
         new_weights = np.array(self.target.get_weights()) * tau + np.array(self.network.get_weights()) * (1 - tau)

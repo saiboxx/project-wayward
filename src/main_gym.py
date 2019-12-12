@@ -58,6 +58,10 @@ def main():
 
         state = new_state
 
+    os.makedirs("models/lunar_lander/", exist_ok=True)
+    agent.actor.network.save(os.path.join("models/lunar_lander/", "actor.h5"))
+    agent.actor.target.save(os.path.join("models/lunar_lander/", "actor_target.h5"))
+
     print("Closing environment.")
     env.close()
 

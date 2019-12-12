@@ -38,9 +38,6 @@ class Agent(object):
             # Update critic
             self.critic.update_network(state, action, target)
 
-            # Get actions from Actor with old states
-            a_output = self.actor.predict(state, use_target=False)
-
             # Get Gradient from critic
             with tf.GradientTape() as tape:
                 action = self.actor.network(state)
