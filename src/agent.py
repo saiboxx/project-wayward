@@ -24,36 +24,35 @@ class Agent(object):
         self.output_path = os.path.join("models", cfg["EXECUTABLE"])
 
     def learn(self):
-        if self.replay_buffer.cur_buffer_size > (self.replay_buffer.max_buffer_size * 0.25):
-            # Get experiences from replay buffer
-            state, action, reward, new_state = self.replay_buffer.sample()
+        # Get experiences from replay buffer
+        state, action, reward, new_state = self.replay_buffer.sample()
 
-            state = from_numpy(state).float()
-            action = from_numpy(action).float()
-            reward = from_numpy(reward).float()
-            new_state = from_numpy(new_state).float()
+        state = from_numpy(state).float()
+        action = from_numpy(action).float()
+        reward = from_numpy(reward).float()
+        new_state = from_numpy(new_state).float()
 
-            # Calculate targets
-            target_values = self.critic.predict(new_state,
-                                                self.actor.predict(new_state, use_target=True),
-                                                use_target=True)
+        # Calculate targets
+        target_values = self.critic.predict(new_state,
+                                            self.actor.predict(new_state, use_target=True),
+                                            use_target=True)
 
-            target = reward.unsqueeze(1) + self.gamma * target_values
+        target = reward.unsqueeze(1) + self.gamma * target_values
 
-            # Update critic
-            self.critic.update_network(state, action, target)
+        # Update critic
+        self.critic.update_network(state, action, target)
 
-            # Get Gradient from critic and apply to actor
-            a_pred = self.actor.network(state)
-            loss = self.critic.network(state, a_pred)
-            mean_loss = -1 * loss.mean()
-            self.actor.optimizer.zero_grad()
-            mean_loss.backward()
-            self.actor.optimizer.step()
+        # Get Gradient from critic and apply to actor
+        a_pred = self.actor.network(state)
+        loss = self.critic.network(state, a_pred)
+        mean_loss = -1 * loss.mean()
+        self.actor.optimizer.zero_grad()
+        mean_loss.backward()
+        self.actor.optimizer.step()
 
-            # Update target networks
-            self.actor.update_target(self.tau)
-            self.critic.update_target(self.tau)
+        # Update target networks
+        self.actor.update_target(self.tau)
+        self.critic.update_target(self.tau)
 
     def save_models(self, steps: int):
         os.makedirs(self.output_path, exist_ok=True)
