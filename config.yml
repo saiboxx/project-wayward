@@ -3,12 +3,12 @@
 ###############################################################################
 EXECUTABLE: crawler
 STEPS: 100000
-VERBOSE_STEPS: 100
+VERBOSE_STEPS: 1000
 CHECKPOINTS: 10000
 NO_GRAPHICS: False
 
 NOISE_START: 0.3
-NOISE_DECAY: 0.6
+NOISE_DECAY: 0.5
 
 BUFFER_SIZE: 10000
 BATCH_SIZE: 32
@@ -21,9 +21,9 @@ GAMMA: 0.99
 
 
 LAYER_SIZES:
-  - 64
-  - 32
-  - 16
+  - 256
+  - 256
+  - 256
 
 
 ###############################################################################

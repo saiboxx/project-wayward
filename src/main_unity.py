@@ -2,6 +2,7 @@ import os
 import yaml
 import time
 from mlagents.envs.environment import UnityEnvironment
+from torch import from_numpy
 
 from src.agent import Agent
 
@@ -33,7 +34,8 @@ def main():
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
-        action = agent.actor.predict(state, use_target=False)
+        action = agent.actor.predict(from_numpy(state).float(), use_target=False)
+        action = action.cpu().numpy()
         info = env.step(action)
         brain_info = info[env.external_brain_names[0]]
         new_state = brain_info.vector_observations

@@ -42,7 +42,7 @@ class ReplayBuffer(object):
         reached. A return of the env is an array of with size NUM_AGENTS X OBSERVATION_SPACE,
         so it has to be saved row by row.
         """
-        if reward == isinstance(reward, list):
+        if isinstance(reward, list):
             if self.cur_buffer_size >= self.max_buffer_size:
                 del self.states[0]
                 del self.actions[0]

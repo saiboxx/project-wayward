@@ -3,6 +3,7 @@ import yaml
 import time
 import gym
 import numpy as np
+from torch import from_numpy, save
 from src.agent import Agent
 
 
@@ -31,7 +32,8 @@ def main():
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
-        action = agent.actor.predict(state, use_target=False)
+        action = agent.actor.predict(from_numpy(state).float(), use_target=False)
+        action = action.cpu().numpy()
         env.render()
         new_state, reward, done, info = env.step(np.reshape(action, action_space))
         new_state = np.reshape(new_state, (1, observation_space))
@@ -59,8 +61,8 @@ def main():
         state = new_state
 
     os.makedirs("models/lunar_lander/", exist_ok=True)
-    agent.actor.network.save(os.path.join("models/lunar_lander/", "actor.h5"))
-    agent.actor.target.save(os.path.join("models/lunar_lander/", "actor_target.h5"))
+    save(agent.actor.network, os.path.join("models/lunar_lander/", "actor.pt"))
+    save(agent.actor.target, os.path.join("models/lunar_lander/", "actor_target.pt"))
 
     print("Closing environment.")
     env.close()
