@@ -42,12 +42,13 @@ class ReplayBuffer(object):
         reached. A return of the env is an array of with size NUM_AGENTS X OBSERVATION_SPACE,
         so it has to be saved row by row.
         """
+        num_envs = len(state)
         if isinstance(reward, np.ndarray):
             if self.cur_buffer_size >= self.max_buffer_size:
-                del self.states[0]
-                del self.actions[0]
-                del self.rewards[0]
-                del self.new_states[0]
+                del self.states[:num_envs]
+                del self.actions[:num_envs]
+                del self.rewards[:num_envs]
+                del self.new_states[:num_envs]
 
             self.states.extend(state)
             self.actions.extend(action)
