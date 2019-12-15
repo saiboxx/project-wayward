@@ -2,7 +2,7 @@ import os
 import yaml
 import time
 import tensorflow as tf
-from mlagents.envs.environment import UnityEnvironment
+from mlagents.environment import UnityEnvironment
 
 
 def main():
