@@ -78,15 +78,17 @@ def main():
             episode += 1
 
         if steps % cfg["CHECKPOINTS"] == 0:
-            print("CHECKPOINT: Saving Models.")
+            print("CHECKPOINT: Saving Models and Summary.")
             agent.save_models(steps)
-            summary_writer.writer.flush()
+            summary.writer.flush()
 
         state = new_state
         summary.adv_step()
 
     print("Closing environment.")
     env.close()
+    summary.writer.flush()
+    summary.writer.close()
 
 def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
         -> Tuple[UnityEnvironment, EngineConfigurationChannel]:
