@@ -1,5 +1,6 @@
 from torch.utils.tensorboard import SummaryWriter
 
+
 class Summary(object):
     def __init__(self, cfg):
         self.writer = SummaryWriter()
@@ -12,8 +13,9 @@ class Summary(object):
     def hparams(self, cfg):
         dict = {
             "STEPS": cfg["STEPS"],
-            "NOISE_START": cfg["NOISE_START"],
-            "NOISE_DECAY": cfg["NOISE_DECAY"],
+            "OUNOISE": cfg["OUNOISE"],
+            "GAUSSIAN_START": cfg["GAUSSIAN_START"],
+            "GAUSSIAN_DECAY": cfg["GAUSSIAN_DECAY"],
             "BUFFER_SIZE": cfg["BUFFER_SIZE"],
             "BATCH_SIZE": cfg["BATCH_SIZE"],
             "ACTOR_LEARNING_RATE": cfg["ACTOR_LEARNING_RATE"],

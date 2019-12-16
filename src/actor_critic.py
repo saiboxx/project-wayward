@@ -1,7 +1,8 @@
 import yaml
 import numpy as np
 from src.networks import ActorNet, CriticNet
-from torch import no_grad, tensor, normal, empty
+from src.ou_noise import OUNoise
+from torch import no_grad, from_numpy, tensor, normal, empty
 from torch.nn import MSELoss
 from torch.optim import Adam
 
@@ -14,8 +15,10 @@ class Actor(object):
         self.network = ActorNet(observation_space, action_space, cfg["LAYER_SIZES"])
         self.target = ActorNet(observation_space, action_space, cfg["LAYER_SIZES"])
         self.optimizer = Adam(self.network.parameters(), lr=cfg["ACTOR_LEARNING_RATE"])
-        self.noise = cfg["NOISE_START"]
-        self.noise_steps = cfg["NOISE_START"] / (cfg["STEPS"] * cfg["NOISE_DECAY"])
+        self.ounoise = cfg["OUNOISE"]
+        self.noise = OUNoise(mu=np.zeros(action_space))
+        self.gaussian_std = cfg["GAUSSIAN_START"]
+        self.noise_steps = cfg["GAUSSIAN_START"] / (cfg["STEPS"] * cfg["GAUSSIAN_DECAY"])
 
     def predict(self, state: tensor, use_target: bool) -> tensor:
         with no_grad():
@@ -24,11 +27,14 @@ class Actor(object):
                 return predictions
             else:
                 predictions = self.network(state)
-                if self.noise > 0:
-                    noise = empty(predictions.shape).normal_(mean=0, std=self.noise)
-                    self.noise -= self.noise_steps
-                    return predictions + noise
-            return predictions
+                if self.ounoise:
+                    return predictions + from_numpy(self.noise()).float()
+                else:
+                    if self.gaussian_std.noise > 0:
+                        noise = empty(predictions.shape).normal_(mean=0, std=self.gaussian_std)
+                        self.noise -= self.noise_steps
+                        return predictions + noise
+                    return predictions
 
     def update_target(self, tau: float):
         for target_weight, weight in zip(self.target.parameters(), self.network.parameters()):

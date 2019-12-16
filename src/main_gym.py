@@ -5,6 +5,7 @@ import gym
 import numpy as np
 from torch import from_numpy, save
 from src.agent import Agent
+from src.summary import Summary
 
 
 def main():
@@ -14,15 +15,16 @@ def main():
     with open("config.yml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-    print("Loading environment {}.".format(cfg["EXECUTABLE"]))
+    print("Loading environment.")
     env = gym.make("LunarLanderContinuous-v2")
     env.reset()
     observation_space = env.observation_space.shape[0]
     action_space = env.action_space.shape[0]
     state = np.zeros((1, observation_space))
+    summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = Agent(observation_space, action_space)
+    agent = Agent(observation_space, action_space, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
