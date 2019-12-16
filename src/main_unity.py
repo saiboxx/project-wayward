@@ -8,6 +8,7 @@ from src.mlagents.side_channel.engine_configuration_channel import EngineConfig,
 from torch import from_numpy
 
 from src.agent import Agent
+from src.summary import Summary
 
 
 def main():
@@ -27,15 +28,17 @@ def main():
     observation_space = group_spec.observation_shapes[0][0]
     step_result = env.get_step_result(group_name)
     state = step_result.obs[0]
+    summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = Agent(observation_space, action_space)
+    agent = Agent(observation_space, action_space, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
     mean_reward = 0
     reward_cur_episode = []
     reward_last_episode = 0
+    start_time_episode = time.time()
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
@@ -54,6 +57,8 @@ def main():
         acc_reward += mean_step
         mean_reward += mean_step
         reward_cur_episode.append(reward[0])
+        
+        summary.add_scalar("Reward/Step", mean_step);
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
             mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
@@ -65,17 +70,23 @@ def main():
         if done:
             reward_last_episode = sum(reward_cur_episode)
             reward_cur_episode = []
+            duration_last_episode = time.time() - start_time_episode
+            start_time_episode = time.time()
+            summary.add_scalar("Reward/Episode", reward_last_episode, True);
+            summary.add_scalar("Duration/Episode", duration_last_episode, True);
+            summary.adv_episode()
             episode += 1
 
         if steps % cfg["CHECKPOINTS"] == 0:
             print("CHECKPOINT: Saving Models.")
             agent.save_models(steps)
+            summary_writer.writer.flush()
 
         state = new_state
+        summary.adv_step()
 
     print("Closing environment.")
     env.close()
-
 
 def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
         -> Tuple[UnityEnvironment, EngineConfigurationChannel]:
@@ -104,7 +115,6 @@ def format_timedelta(timedelta):
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return '{:0>2d}:{:0>2d}:{:0>2d}'.format(hours, minutes, seconds)
-
 
 if __name__ == '__main__':
     main()

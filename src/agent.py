@@ -5,14 +5,14 @@ from torch import from_numpy
 
 from src.actor_critic import Actor, Critic
 from src.replay_buffer import ReplayBuffer
-
+from src.summary import Summary
 
 class Agent(object):
     """"
     Depicts the acting Entity.
     """
 
-    def __init__(self, observation_space: int, action_space: int):
+    def __init__(self, observation_space: int, action_space: int, summary: Summary):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
@@ -22,6 +22,7 @@ class Agent(object):
         self.gamma = cfg["GAMMA"]
         self.tau = cfg["TAU"]
         self.output_path = os.path.join("models", cfg["EXECUTABLE"])
+        self.summary = summary
 
     def learn(self):
         # Get experiences from replay buffer
@@ -49,6 +50,7 @@ class Agent(object):
         self.actor.optimizer.zero_grad()
         mean_loss.backward()
         self.actor.optimizer.step()
+        self.summary.add_scalar("Loss/Critic", mean_loss)
 
         # Update target networks
         self.actor.update_target(self.tau)
