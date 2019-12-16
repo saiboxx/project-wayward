@@ -30,9 +30,9 @@ class Actor(object):
                 if self.ounoise:
                     return predictions + from_numpy(self.noise()).float()
                 else:
-                    if self.gaussian_std.noise > 0:
+                    if self.gaussian_std > 0:
                         noise = empty(predictions.shape).normal_(mean=0, std=self.gaussian_std)
-                        self.noise -= self.noise_steps
+                        self.gaussian_std -= self.noise_steps
                         return predictions + noise
                     return predictions
 
