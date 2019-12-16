@@ -2,7 +2,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 class Summary(object):
     def __init__(self, cfg):
-        self.writer = SummaryWriter(flush_secs=cfg["LOG_INTERVAL_SECS"])
+        self.writer = SummaryWriter()
         #self.writer.add_text("Config/Executable", cfg["EXECUTABLE"])
         #self.writer.add_text("Config/Graphics", str(cfg["NO_GRAPHICS"]))
         self.writer.add_hparams(self.hparams(cfg),dict())
