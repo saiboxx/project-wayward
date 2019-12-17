@@ -34,8 +34,11 @@ def main():
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
-        action = agent.actor.predict(from_numpy(state).float(), use_target=False)
-        action = action.cpu().numpy()
+        if steps <= cfg["BUFFER_SIZE"]:
+            action = np.random.uniform(-1, 1, size=(len(state), action_space))
+        else:
+            action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
+            action = action.cpu().numpy()
         env.render()
         new_state, reward, done, info = env.step(np.reshape(action, action_space))
         new_state = np.reshape(new_state, (1, observation_space))
