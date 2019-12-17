@@ -36,18 +36,19 @@ class ReplayBuffer(object):
 
         return sample_states, sample_actions, sample_rewards, sample_new_states
 
-    def add(self, state: np.ndarray, action: np.ndarray, reward: list, new_state: np.ndarray):
+    def add(self, state: np.ndarray, action: np.ndarray, reward: np.ndarray, new_state: np.ndarray):
         """"
         Adds an experience to the buffer. It pops the oldest experience if buffer_size is
         reached. A return of the env is an array of with size NUM_AGENTS X OBSERVATION_SPACE,
         so it has to be saved row by row.
         """
-        if isinstance(reward, list):
+        num_envs = len(state)
+        if isinstance(reward, np.ndarray):
             if self.cur_buffer_size >= self.max_buffer_size:
-                del self.states[0]
-                del self.actions[0]
-                del self.rewards[0]
-                del self.new_states[0]
+                del self.states[:num_envs]
+                del self.actions[:num_envs]
+                del self.rewards[:num_envs]
+                del self.new_states[:num_envs]
 
             self.states.extend(state)
             self.actions.extend(action)

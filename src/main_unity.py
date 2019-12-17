@@ -1,10 +1,14 @@
 import os
 import yaml
 import time
-from mlagents.envs.environment import UnityEnvironment
+import numpy as np
+from typing import Tuple
+from src.mlagents.environment import UnityEnvironment
+from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
 from torch import from_numpy
 
 from src.agent import Agent
+from src.summary import Summary
 
 
 def main():
@@ -16,38 +20,45 @@ def main():
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
     worker_id = 0
-    env = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
-    info = env.reset()
-    brain_info = info[env.external_brain_names[0]]
-    observation_space = brain_info.vector_observations.shape[1]
-    action_space = brain_info.action_masks.shape[1]
-    state = brain_info.vector_observations
+    env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
+    env.reset()
+    group_name = env.get_agent_groups()[0]
+    group_spec = env.get_agent_group_spec(group_name)
+    action_space = group_spec.action_shape
+    observation_space = group_spec.observation_shapes[0][0]
+    step_result = env.get_step_result(group_name)
+    state = step_result.obs[0]
+    summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = Agent(observation_space, action_space)
+    agent = Agent(observation_space, action_space, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
     mean_reward = 0
     reward_cur_episode = []
     reward_last_episode = 0
+    start_time_episode = time.time()
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
-        action = agent.actor.predict(from_numpy(state).float(), use_target=False)
+        action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
         action = action.cpu().numpy()
-        info = env.step(action)
-        brain_info = info[env.external_brain_names[0]]
-        new_state = brain_info.vector_observations
-        reward = brain_info.rewards
-        done = brain_info.local_done[0]
+        env.set_actions(group_name, action)
+        env.step()
+        step_result = env.get_step_result(group_name)
+        new_state = step_result.obs[0]
+        reward = step_result.reward
+        done = step_result.done[0]
         agent.replay_buffer.add(state, action, reward, new_state)
         agent.learn()
 
-        mean_step = sum(brain_info.rewards) / len(brain_info.rewards)
+        mean_step = sum(reward) / len(reward)
         acc_reward += mean_step
         mean_reward += mean_step
-        reward_cur_episode.append(brain_info.rewards[0])
+        reward_cur_episode.append(reward[0])
+        
+        summary.add_scalar("Reward/Step", mean_step);
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
             mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
@@ -59,30 +70,28 @@ def main():
         if done:
             reward_last_episode = sum(reward_cur_episode)
             reward_cur_episode = []
+            duration_last_episode = time.time() - start_time_episode
+            start_time_episode = time.time()
+            summary.add_scalar("Reward/Episode", reward_last_episode, True);
+            summary.add_scalar("Duration/Episode", duration_last_episode, True);
+            summary.adv_episode()
             episode += 1
-            info = env.reset()
-            brain_info = info[env.external_brain_names[0]]
-            new_state = brain_info.vector_observations
 
         if steps % cfg["CHECKPOINTS"] == 0:
-            print("CHECKPOINT: Saving Models.")
+            print("CHECKPOINT: Saving Models and Summary.")
             agent.save_models(steps)
-
-        if steps % 10000 == 0:
-            worker_id += 1
-            env.close()
-            env = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
-            info = env.reset()
-            brain_info = info[env.external_brain_names[0]]
-            new_state = brain_info.vector_observations
+            summary.writer.flush()
 
         state = new_state
+        summary.adv_step()
 
     print("Closing environment.")
     env.close()
+    summary.writer.flush()
+    summary.writer.close()
 
-
-def load_environment(env_name: str, no_graphics: bool, worker_id: int) -> UnityEnvironment:
+def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
+        -> Tuple[UnityEnvironment, EngineConfigurationChannel]:
     """
     Loads a Unity environment with a given key name.
     """
@@ -90,7 +99,12 @@ def load_environment(env_name: str, no_graphics: bool, worker_id: int) -> UnityE
     files_in_dir = os.listdir(env_path)
     env_file = [os.path.join(env_path, f) for f in files_in_dir
                 if os.path.isfile(os.path.join(env_path, f))][0]
-    return UnityEnvironment(file_name=env_file, no_graphics=no_graphics, worker_id=worker_id)
+    engine_configuration_channel = EngineConfigurationChannel()
+    env = UnityEnvironment(file_name=env_file,
+                           no_graphics=no_graphics,
+                           worker_id=worker_id,
+                           side_channels=[engine_configuration_channel])
+    return env, engine_configuration_channel
 
 
 def predict_total_time(time_elapsed, episodes_elapsed, episodes_total):
@@ -103,7 +117,6 @@ def format_timedelta(timedelta):
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return '{:0>2d}:{:0>2d}:{:0>2d}'.format(hours, minutes, seconds)
-
 
 if __name__ == '__main__':
     main()
