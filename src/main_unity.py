@@ -54,7 +54,9 @@ def main():
         reward = step_result.reward
         done = step_result.done[0]
         agent.replay_buffer.add(state, action, reward, new_state)
-        agent.learn()
+        
+        if steps > cfg["BUFFER_SIZE"]:
+            agent.learn()
 
         mean_step = sum(reward) / len(reward)
         acc_reward += mean_step
