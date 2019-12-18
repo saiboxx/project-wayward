@@ -41,7 +41,7 @@ def main():
     start_time_episode = time.time()
     episode = 1
     start_time = time.time()
-    for steps in range(1, cfg["STEPS"]):
+    for steps in range(1, cfg["STEPS"] + 1):
         if steps <= cfg["BUFFER_SIZE"]:
             action = np.random.uniform(-1, 1, size=(len(state), action_space))
         else:

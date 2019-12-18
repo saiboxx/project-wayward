@@ -37,7 +37,7 @@ def main():
     episode = 1
     reward_last_episode = 0
     start_time = time.time()
-    for steps in range(1, cfg["RUN_STEPS"]):
+    for steps in range(1, cfg["RUN_STEPS"] + 1):
         with torch.no_grad():
             action = actor(from_numpy(np.array(state)).float())
         action = action.cpu().numpy()
