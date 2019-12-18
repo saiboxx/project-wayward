@@ -16,6 +16,7 @@ class Summary(object):
             "OUNOISE": cfg["OUNOISE"],
             "GAUSSIAN_START": cfg["GAUSSIAN_START"],
             "GAUSSIAN_DECAY": cfg["GAUSSIAN_DECAY"],
+            "GAUSSIAN_MIN": cfg["GAUSSIAN_MIN"],
             "BUFFER_SIZE": cfg["BUFFER_SIZE"],
             "BATCH_SIZE": cfg["BATCH_SIZE"],
             "ACTOR_LEARNING_RATE": cfg["ACTOR_LEARNING_RATE"],
