@@ -18,6 +18,7 @@ class Actor(object):
         self.ounoise = cfg["OUNOISE"]
         self.noise = OUNoise(mu=np.zeros(action_space))
         self.gaussian_std = cfg["GAUSSIAN_START"]
+        self.gaussian_min = cfg["GAUSSIAN_MIN"]
         self.noise_steps = cfg["GAUSSIAN_START"] / (cfg["STEPS"] * cfg["GAUSSIAN_DECAY"])
 
     def predict(self, state: tensor, use_target: bool) -> tensor:
@@ -30,11 +31,12 @@ class Actor(object):
                 if self.ounoise:
                     return predictions + from_numpy(self.noise()).float()
                 else:
-                    if self.gaussian_std > 0:
-                        noise = empty(predictions.shape).normal_(mean=0, std=self.gaussian_std)
+                    if self.gaussian_std <= self.gaussian_min:
+                        self.gaussian_std = self.gaussian_min
+                    else:
                         self.gaussian_std -= self.noise_steps
-                        return predictions + noise
-                    return predictions
+                    noise = empty(predictions.shape).normal_(mean=0, std=self.gaussian_std)
+                    return predictions + noise
 
     def update_target(self, tau: float):
         for target_weight, weight in zip(self.target.parameters(), self.network.parameters()):
