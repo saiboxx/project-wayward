@@ -19,7 +19,7 @@ def main():
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
-    worker_id = 0
+    worker_id = 1
     env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
     env.reset()
     group_name = env.get_agent_groups()[0]
@@ -28,6 +28,7 @@ def main():
     observation_space = group_spec.observation_shapes[0][0]
     step_result = env.get_step_result(group_name)
     state = step_result.obs[0]
+    num_agents = len(state)
     summary = Summary(cfg)
 
     print("Creating Agent.")
@@ -42,7 +43,7 @@ def main():
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"] + 1):
-        if steps <= cfg["BUFFER_SIZE"]:
+        if steps <= cfg["BUFFER_SIZE"] / num_agents:
             action = np.random.uniform(-1, 1, size=(len(state), action_space))
         else:
             action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
@@ -55,7 +56,7 @@ def main():
         done = step_result.done[0]
         agent.replay_buffer.add(state, action, reward, new_state)
         
-        if steps > cfg["BUFFER_SIZE"]:
+        if steps > cfg["BUFFER_SIZE"] / num_agents:
             agent.learn()
 
         mean_step = sum(reward) / len(reward)
