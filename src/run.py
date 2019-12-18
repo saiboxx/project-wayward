@@ -19,7 +19,7 @@ def main():
 
     print("Loading environment {}.".format(cfg["RUN_EXECUTABLE"]))
     worker_id = 1
-    env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
+    env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["RUN_NO_GRAPHICS"], worker_id)
     env.reset()
     group_name = env.get_agent_groups()[0]
     group_spec = env.get_agent_group_spec(group_name)
