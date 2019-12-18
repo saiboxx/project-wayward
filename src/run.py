@@ -19,7 +19,7 @@ def main():
 
     print("Loading environment {}.".format(cfg["RUN_EXECUTABLE"]))
     worker_id = 1
-    env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["RUN_NO_GRAPHICS"], worker_id)
+    env, config_channel = load_environment(cfg["RUN_EXECUTABLE"], cfg["RUN_NO_GRAPHICS"], worker_id)
     env.reset()
     group_name = env.get_agent_groups()[0]
     group_spec = env.get_agent_group_spec(group_name)
@@ -29,7 +29,7 @@ def main():
     print("Loading Model.")
     actor = torch.load(cfg["RUN_MODEL"])
 
-    print("Starting Run with {} steps.".format(cfg["STEPS"]))
+    print("Starting Run with {} steps.".format(cfg["RUN_STEPS"]))
     acc_reward = 0
     mean_reward = 0
     reward_cur_episode = []
@@ -61,7 +61,7 @@ def main():
             mean_reward = 0
 
         if done:
-            mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
+            mean_reward = mean_reward / cfg["RUN_VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
             print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. reward; {3:+.3f} step reward; {4}h elapsed" \
                   .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
