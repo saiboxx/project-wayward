@@ -19,7 +19,7 @@ def main():
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
-    worker_id = 1
+    worker_id = np.random.randint(20)
     env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
     env.reset()
     group_name = env.get_agent_groups()[0]
