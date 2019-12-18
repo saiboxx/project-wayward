@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import yaml
-
+from operator import itemgetter
 
 class ReplayBuffer(object):
 
@@ -23,16 +23,16 @@ class ReplayBuffer(object):
         on the variable BATCH_SIZE in the config file.
         """
         if self.cur_buffer_size <= self.batch_size:
-            sample_states = np.asarray(self.states)
-            sample_actions = np.asarray(self.actions)
-            sample_rewards = np.asarray(self.rewards)
-            sample_new_states = np.asarray(self.new_states)
+            sample_states = self.states
+            sample_actions = self.actions
+            sample_rewards = self.rewards
+            sample_new_states = self.new_states
         else:
             batch_ind = random.sample(range(self.cur_buffer_size), self.batch_size)
-            sample_states = np.asarray(self.states)[batch_ind]
-            sample_actions = np.asarray(self.actions)[batch_ind]
-            sample_rewards = np.asarray(self.rewards)[batch_ind]
-            sample_new_states = np.asarray(self.new_states)[batch_ind]
+            sample_states = itemgetter(*batch_ind)(self.states)
+            sample_actions = itemgetter(*batch_ind)(self.actions)
+            sample_rewards = itemgetter(*batch_ind)(self.rewards)
+            sample_new_states = itemgetter(*batch_ind)(self.new_states)
 
         return sample_states, sample_actions, sample_rewards, sample_new_states
 
