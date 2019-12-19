@@ -1,7 +1,7 @@
 import os
 import yaml
 import torch
-from torch import from_numpy
+from torch import tensor
 
 from src.actor_critic import Actor, Critic
 from src.replay_buffer import ReplayBuffer
@@ -28,10 +28,10 @@ class Agent(object):
         # Get experiences from replay buffer
         state, action, reward, new_state = self.replay_buffer.sample()
 
-        state = from_numpy(state).float()
-        action = from_numpy(action).float()
-        reward = from_numpy(reward).float()
-        new_state = from_numpy(new_state).float()
+        state = tensor(state).float()
+        action = tensor(action).float()
+        reward = tensor(reward).float()
+        new_state = tensor(new_state).float()
 
         # Calculate targets
         target_values = self.critic.predict(new_state,
