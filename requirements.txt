@@ -2,6 +2,7 @@ mlagents
 numpy
 torch
 gym[all]
+tqdm
 
 # local package
 -e .
