@@ -6,6 +6,7 @@ from typing import Tuple
 from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
 from torch import from_numpy
+from tqdm import tqdm
 
 from src.agent import Agent
 from src.summary import Summary
@@ -41,13 +42,10 @@ def main():
     reward_last_episode = 0
     start_time_episode = time.time()
     episode = 1
-    start_time = time.time()
-    for steps in range(1, cfg["STEPS"] + 1):
-        if steps <= cfg["BUFFER_SIZE"] / num_agents:
-            action = np.random.uniform(-1, 1, size=(len(state), action_space))
-        else:
-            action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
-            action = action.cpu().numpy()
+
+    print("Initiating with warm-up phase")
+    for b in tqdm(range(cfg["BUFFER_SIZE"]//num_agents)):
+        action = np.random.uniform(-1, 1, size=(len(state), action_space))
         env.set_actions(group_name, action)
         env.step()
         step_result = env.get_step_result(group_name)
@@ -55,9 +53,21 @@ def main():
         reward = step_result.reward
         done = step_result.done[0]
         agent.replay_buffer.add(state, action, reward, new_state)
+
+    start_time = time.time()
+    for steps in range(1, cfg["STEPS"] + 1):
+        action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
+        action = action.cpu().numpy()
         
-        if steps > cfg["BUFFER_SIZE"] / num_agents:
-            agent.learn()
+        env.set_actions(group_name, action)
+        env.step()
+        step_result = env.get_step_result(group_name)
+        new_state = step_result.obs[0]
+        reward = step_result.reward
+        done = step_result.done[0]
+        agent.replay_buffer.add(state, action, reward, new_state)
+    
+        agent.learn()
 
         mean_step = sum(reward) / len(reward)
         acc_reward += mean_step
@@ -95,6 +105,7 @@ def main():
     env.close()
     summary.writer.flush()
     summary.writer.close()
+
 
 def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
         -> Tuple[UnityEnvironment, EngineConfigurationChannel]:
