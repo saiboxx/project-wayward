@@ -1,7 +1,7 @@
 mlagents
 numpy
-tensorflow-gpu
-"gym[all]"
+torch
+gym[all]
 
 # local package
 -e .
