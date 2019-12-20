@@ -16,7 +16,7 @@ class Actor(object):
         self.target = ActorNet(observation_space, action_space, cfg["LAYER_SIZES"])
         self.optimizer = Adam(self.network.parameters(), lr=cfg["ACTOR_LEARNING_RATE"])
         self.ounoise = cfg["OUNOISE"]
-        self.noise = OUNoise(mu=np.zeros(action_space))
+        self.noise = OUNoise(mu=np.zeros(action_space), dt=cfg["OU_DECAY"])
         self.gaussian_std = cfg["GAUSSIAN_START"]
         self.gaussian_min = cfg["GAUSSIAN_MIN"]
         self.noise_steps = cfg["GAUSSIAN_START"] / (cfg["STEPS"] * cfg["GAUSSIAN_DECAY"])

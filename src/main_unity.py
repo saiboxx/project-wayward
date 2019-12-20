@@ -5,7 +5,7 @@ import numpy as np
 from typing import Tuple
 from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
-from torch import from_numpy
+from torch import tensor
 from tqdm import tqdm
 
 from src.agent import Agent
@@ -44,7 +44,7 @@ def main():
     episode = 1
 
     print("Initiating with warm-up phase")
-    for b in tqdm(range(cfg["BUFFER_SIZE"]//num_agents)):
+    for _ in tqdm(range(cfg["BUFFER_SIZE"]//(num_agents*10))):
         action = np.random.uniform(-1, 1, size=(len(state), action_space))
         env.set_actions(group_name, action)
         env.step()
@@ -56,7 +56,7 @@ def main():
 
     start_time = time.time()
     for steps in range(1, cfg["STEPS"] + 1):
-        action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
+        action = agent.actor.predict(tensor(state).float(), use_target=False)
         action = action.cpu().numpy()
         
         env.set_actions(group_name, action)

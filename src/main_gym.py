@@ -3,7 +3,8 @@ import yaml
 import time
 import gym
 import numpy as np
-from torch import from_numpy, save
+from torch import tensor, save
+from tqdm import tqdm
 from src.agent import Agent
 from src.summary import Summary
 
@@ -26,6 +27,14 @@ def main():
     print("Creating Agent.")
     agent = Agent(observation_space, action_space, summary)
 
+    print("Initiating with warm-up phase")
+    for _ in tqdm(range(cfg["BUFFER_SIZE"]//100)):
+        action = np.random.uniform(-1, 1, size=(len(state), action_space))
+        env.render()
+        new_state, reward, done, info = env.step(np.reshape(action, action_space))
+        new_state = np.reshape(new_state, (1, observation_space))
+        agent.replay_buffer.add(state, action, reward, new_state)
+
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
     mean_reward = 0
@@ -34,15 +43,13 @@ def main():
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
-        if steps <= cfg["BUFFER_SIZE"]:
-            action = np.random.uniform(-1, 1, size=(len(state), action_space))
-        else:
-            action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
-            action = action.cpu().numpy()
+        action = agent.actor.predict(tensor(state).float(), use_target=False)
+        action = action.cpu().numpy()
         env.render()
         new_state, reward, done, info = env.step(np.reshape(action, action_space))
         new_state = np.reshape(new_state, (1, observation_space))
         agent.replay_buffer.add(state, action, reward, new_state)
+
         agent.learn()
 
         acc_reward += reward
