@@ -39,9 +39,8 @@ def main():
         action = action_distribution.sample()
         log_prob = action_distribution.log_prob(action)
         value = agent.critic(state)
-
         env.render()
-        new_state, reward, done, info = env.step(np.reshape(action, action_space))
+        new_state, reward, done, info = env.step(np.reshape(action.cpu().numpy(), action_space))
 
         new_state = np.reshape(new_state, (1, observation_space))
         agent.replay_buffer.add(state, action, reward, done, log_prob, value)

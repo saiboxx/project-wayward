@@ -23,12 +23,20 @@ class ReplayBuffer(object):
         """"
 
         """
-        self.states.append(state)
-        self.actions.append(action)
-        self.rewards.append(tensor(reward).unsqueeze(1))
-        self.masks.append(tensor(1 - done).unsqueeze(1))
-        self.log_probs.append(log_prob)
-        self.values.append(value)
+        if isinstance(reward, np.ndarray):
+            self.states.append(state)
+            self.actions.append(action)
+            self.rewards.append(tensor(reward).unsqueeze(1))
+            self.masks.append(tensor(1 - done).unsqueeze(1))
+            self.log_probs.append(log_prob)
+            self.values.append(value)
+        else:
+            self.states.append(state)
+            self.actions.append(action)
+            self.rewards.append(tensor(reward))
+            self.masks.append(tensor(1 - done))
+            self.log_probs.append(log_prob)
+            self.values.append(value)
 
     def reset(self):
         self.states = []
