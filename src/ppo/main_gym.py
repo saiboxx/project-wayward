@@ -3,9 +3,9 @@ import yaml
 import time
 import gym
 import numpy as np
-from torch import from_numpy, save
-from src.agent import Agent
-from src.summary import Summary
+from torch import tensor, save
+from src.ppo.agent import Agent
+from src.ppo.summary import Summary
 
 
 def main():
@@ -34,16 +34,22 @@ def main():
     episode = 1
     start_time = time.time()
     for steps in range(1, cfg["STEPS"]):
-        if steps <= cfg["BUFFER_SIZE"]:
-            action = np.random.uniform(-1, 1, size=(len(state), action_space))
-        else:
-            action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
-            action = action.cpu().numpy()
+        state = tensor(state).float().detach()
+        action_distribution = agent.actor(state)
+        action = action_distribution.sample()
+        log_prob = action_distribution.log_prob(action)
+        value = agent.critic(state)
+
         env.render()
         new_state, reward, done, info = env.step(np.reshape(action, action_space))
+
         new_state = np.reshape(new_state, (1, observation_space))
-        agent.replay_buffer.add(state, action, reward, new_state)
-        agent.learn()
+        agent.replay_buffer.add(state, action, reward, done, log_prob, value)
+
+        if steps % cfg["PPO_BUFFER_SIZE"] == 0:
+            returns = agent.get_returns(tensor(new_state).float())
+            agent.learn(returns)
+            agent.replay_buffer.reset()
 
         acc_reward += reward
         mean_reward += reward
@@ -61,7 +67,6 @@ def main():
             reward_cur_episode = []
             episode += 1
             env.reset()
-            state = np.zeros((1, observation_space))
 
         state = new_state
 

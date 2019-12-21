@@ -3,9 +3,9 @@ import yaml
 import torch
 from torch import tensor
 
-from src.actor_critic import Actor, Critic
-from src.replay_buffer import ReplayBuffer
-from src.summary import Summary
+from src.ddpg.actor_critic import Actor, Critic
+from src.ddpg.replay_buffer import ReplayBuffer
+from src.ddpg.summary import Summary
 
 class Agent(object):
     """"

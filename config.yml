@@ -1,12 +1,38 @@
 ###############################################################################
-# SET PARAMETERS FOR TRAINING
+# SET GENERAL PARAMETERS
 ###############################################################################
 EXECUTABLE: crawler
-STEPS: 100000
+STEPS: 1000000
 VERBOSE_STEPS: 1000
 CHECKPOINTS: 20000
 NO_GRAPHICS: False
 
+
+LAYER_SIZES:
+  - 512
+  - 512
+
+###############################################################################
+# SET PARAMETERS FOR TRAINING WITH PPO
+###############################################################################
+PPO_BUFFER_SIZE: 20480
+PPO_BATCH_SIZE: 2048
+PPO_EPOCHS: 3
+
+PPO_STD: 0.05
+
+PPO_GAMMA: 0.99
+PPO_LAMBDA: 0.95
+PPO_EPSILON: 0.2
+CRITIC_DISCOUNT: 0.5
+ENTROPY_BETA: 0.001
+
+PPO_ACTOR_LEARNING_RATE: 0.0001
+PPO_CRITIC_LEARNING_RATE: 0.0001
+
+###############################################################################
+# SET PARAMETERS FOR TRAINING WITH DDPG
+###############################################################################
 OUNOISE: False
 
 GAUSSIAN_START: 1.0
@@ -21,11 +47,6 @@ CRITIC_LEARNING_RATE: 0.0001
 
 TAU: 0.9999
 GAMMA: 0.99
-
-
-LAYER_SIZES:
-  - 256
-  - 256
 
 ###############################################################################
 # SET PARAMETERS FOR RUN

@@ -5,11 +5,10 @@ import numpy as np
 from typing import Tuple
 from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
-from torch import from_numpy
-from tqdm import tqdm
+from torch import tensor
 
-from src.agent import Agent
-from src.summary import Summary
+from src.ppo.agent import Agent
+from src.ppo.summary import Summary
 
 
 def main():
@@ -43,31 +42,26 @@ def main():
     start_time_episode = time.time()
     episode = 1
 
-    print("Initiating with warm-up phase")
-    for b in tqdm(range(cfg["BUFFER_SIZE"]//num_agents)):
-        action = np.random.uniform(-1, 1, size=(len(state), action_space))
-        env.set_actions(group_name, action)
-        env.step()
-        step_result = env.get_step_result(group_name)
-        new_state = step_result.obs[0]
-        reward = step_result.reward
-        done = step_result.done[0]
-        agent.replay_buffer.add(state, action, reward, new_state)
-
     start_time = time.time()
     for steps in range(1, cfg["STEPS"] + 1):
-        action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
-        action = action.cpu().numpy()
-        
-        env.set_actions(group_name, action)
+        state = tensor(state).float().detach()
+        action_distribution = agent.actor(state)
+        action = action_distribution.sample()
+        log_prob = action_distribution.log_prob(action)
+        value = agent.critic(state)
+
+        env.set_actions(group_name, action.cpu().numpy())
         env.step()
         step_result = env.get_step_result(group_name)
         new_state = step_result.obs[0]
         reward = step_result.reward
-        done = step_result.done[0]
-        agent.replay_buffer.add(state, action, reward, new_state)
-    
-        agent.learn()
+        done = step_result.done
+        agent.replay_buffer.add(state, action, reward, done, log_prob, value)
+
+        if steps % (cfg["PPO_BUFFER_SIZE"] // num_agents) == 0:
+            returns = agent.get_returns(tensor(new_state).float())
+            agent.learn(returns)
+            agent.replay_buffer.reset()
 
         mean_step = sum(reward) / len(reward)
         acc_reward += mean_step
@@ -83,13 +77,13 @@ def main():
                   .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
             mean_reward = 0
 
-        if done:
+        if done[0]:
             reward_last_episode = sum(reward_cur_episode)
             reward_cur_episode = []
             duration_last_episode = time.time() - start_time_episode
             start_time_episode = time.time()
-            summary.add_scalar("Reward/Episode", reward_last_episode, True);
-            summary.add_scalar("Duration/Episode", duration_last_episode, True);
+            summary.add_scalar("Reward/Episode", reward_last_episode, True)
+            summary.add_scalar("Duration/Episode", duration_last_episode, True)
             summary.adv_episode()
             episode += 1
 
@@ -134,6 +128,7 @@ def format_timedelta(timedelta):
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return '{:0>2d}:{:0>2d}:{:0>2d}'.format(hours, minutes, seconds)
+
 
 if __name__ == '__main__':
     main()

@@ -1,7 +1,7 @@
 import yaml
 import numpy as np
-from src.networks import ActorNet, CriticNet
-from src.ou_noise import OUNoise
+from src.ddpg.networks import ActorNet, CriticNet
+from src.ddpg.ou_noise import OUNoise
 from torch import no_grad, from_numpy, tensor, normal, empty
 from torch.nn import MSELoss
 from torch.optim import Adam
