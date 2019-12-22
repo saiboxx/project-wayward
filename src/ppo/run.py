@@ -7,7 +7,7 @@ from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
 
 import torch
-from torch import from_numpy
+from torch import tensor
 
 
 def main():
@@ -39,9 +39,10 @@ def main():
     start_time = time.time()
     for steps in range(1, cfg["RUN_STEPS"] + 1):
         with torch.no_grad():
-            action = actor(from_numpy(np.array(state)).float())
-        action = action.cpu().numpy()
-        env.set_actions(group_name, action)
+            state = tensor(state).float().detach()
+            action_distribution = actor(state)
+            action = action_distribution.sample()
+        env.set_actions(group_name, action.cpu().numpy())
         env.step()
         step_result = env.get_step_result(group_name)
         new_state = step_result.obs[0]

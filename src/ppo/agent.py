@@ -7,7 +7,7 @@ from torch import tensor, no_grad
 from torch.nn import MSELoss
 from torch.optim import Adam
 
-from src.ppo.networks import Actor, Critic
+from src.ppo.networks import Actor, Critic, Actor3, Critic3
 from src.ppo.replay_buffer import ReplayBuffer
 from src.ppo.summary import Summary
 
@@ -21,8 +21,12 @@ class Agent(object):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-        self.actor = Actor(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
-        self.critic = Critic(observation_space, cfg["LAYER_SIZES"])
+        if len(cfg["LAYER_SIZES"]) == 2:
+            self.actor = Actor(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
+            self.critic = Critic(observation_space, cfg["LAYER_SIZES"])
+        else:
+            self.actor = Actor3(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
+            self.critic = Critic3(observation_space, cfg["LAYER_SIZES"])
 
         self.actor_optimizer = Adam(self.actor.parameters(), lr=cfg["PPO_ACTOR_LEARNING_RATE"])
         self.critic_optimizer = Adam(self.critic.parameters(), lr=cfg["PPO_CRITIC_LEARNING_RATE"])

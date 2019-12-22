@@ -21,6 +21,7 @@ def main():
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
     worker_id = np.random.randint(20)
     env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
+    config_channel.set_configuration_parameters(time_scale = cfg["TIME_SCALE"])
     env.reset()
     group_name = env.get_agent_groups()[0]
     group_spec = env.get_agent_group_spec(group_name)

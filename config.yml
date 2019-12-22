@@ -1,16 +1,17 @@
 ###############################################################################
 # SET GENERAL PARAMETERS
 ###############################################################################
-EXECUTABLE: crawler
+EXECUTABLE: crawler2
 STEPS: 1000000
 VERBOSE_STEPS: 1000
 CHECKPOINTS: 20000
 NO_GRAPHICS: False
-
+TIME_SCALE: 50.0
 
 LAYER_SIZES:
-  - 512
-  - 512
+  - 256
+  - 256
+  - 256
 
 ###############################################################################
 # SET PARAMETERS FOR TRAINING WITH PPO
@@ -27,8 +28,8 @@ PPO_EPSILON: 0.2
 CRITIC_DISCOUNT: 0.5
 ENTROPY_BETA: 0.001
 
-PPO_ACTOR_LEARNING_RATE: 0.0001
-PPO_CRITIC_LEARNING_RATE: 0.0001
+PPO_ACTOR_LEARNING_RATE: 0.003
+PPO_CRITIC_LEARNING_RATE: 0.003
 
 ###############################################################################
 # SET PARAMETERS FOR TRAINING WITH DDPG
@@ -52,7 +53,7 @@ GAMMA: 0.99
 # SET PARAMETERS FOR RUN
 ###############################################################################
 RUN_EXECUTABLE: crawler
-RUN_MODEL: models/crawler/actor_target_100000.pt
+RUN_MODEL: models/vm_crawler/actor_3000000.pt
 RUN_STEPS: 10000
 RUN_VERBOSE_STEPS: 1000
 RUN_NO_GRAPHICS: False
