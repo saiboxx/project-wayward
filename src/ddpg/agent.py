@@ -7,7 +7,8 @@ from src.ddpg.actor_critic import Actor, Critic
 from src.ddpg.replay_buffer import ReplayBuffer
 from src.ddpg.summary import Summary
 
-class Agent(object):
+
+class DDPGAgent(object):
     """"
     Depicts the acting Entity.
     """

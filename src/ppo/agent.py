@@ -7,12 +7,12 @@ from torch import tensor, no_grad
 from torch.nn import MSELoss
 from torch.optim import Adam
 
-from src.ppo.networks import Actor, Critic, Actor3, Critic3
+from src.ppo.networks import Actor2Layer, Critic2Layer, Actor3Layer, Critic3Layer
 from src.ppo.replay_buffer import ReplayBuffer
 from src.ppo.summary import Summary
 
 
-class Agent(object):
+class PPOAgent(object):
     """"
     Depicts the acting Entity.
     """
@@ -22,11 +22,11 @@ class Agent(object):
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
         if len(cfg["LAYER_SIZES"]) == 2:
-            self.actor = Actor(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
-            self.critic = Critic(observation_space, cfg["LAYER_SIZES"])
+            self.actor = Actor2Layer(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
+            self.critic = Critic2Layer(observation_space, cfg["LAYER_SIZES"])
         else:
-            self.actor = Actor3(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
-            self.critic = Critic3(observation_space, cfg["LAYER_SIZES"])
+            self.actor = Actor3Layer(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
+            self.critic = Critic3Layer(observation_space, cfg["LAYER_SIZES"])
 
         self.actor_optimizer = Adam(self.actor.parameters(), lr=cfg["PPO_ACTOR_LEARNING_RATE"])
         self.critic_optimizer = Adam(self.critic.parameters(), lr=cfg["PPO_CRITIC_LEARNING_RATE"])

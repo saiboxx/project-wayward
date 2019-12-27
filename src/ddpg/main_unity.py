@@ -5,10 +5,10 @@ import numpy as np
 from typing import Tuple
 from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
-from torch import from_numpy
+from torch import tensor
 from tqdm import tqdm
 
-from src.ddpg.agent import Agent
+from src.ddpg.agent import DDPGAgent
 from src.ddpg.summary import Summary
 
 
@@ -33,13 +33,14 @@ def main():
     summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = Agent(observation_space, action_space, summary)
+    agent = DDPGAgent(observation_space, action_space, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
     mean_reward = 0
-    reward_cur_episode = []
-    reward_last_episode = 0
+    reward_cur_episode = np.zeros(num_agents)
+    reward_last_episode = np.zeros(num_agents)
+    reward_mean_episode = 0
     start_time_episode = time.time()
     episode = 1
 
@@ -51,12 +52,11 @@ def main():
         step_result = env.get_step_result(group_name)
         new_state = step_result.obs[0]
         reward = step_result.reward
-        done = step_result.done[0]
         agent.replay_buffer.add(state, action, reward, new_state)
 
     start_time = time.time()
     for steps in range(1, cfg["STEPS"] + 1):
-        action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
+        action = agent.actor.predict(tensor(state).float(), use_target=False)
         action = action.cpu().numpy()
         
         env.set_actions(group_name, action)
@@ -64,7 +64,7 @@ def main():
         step_result = env.get_step_result(group_name)
         new_state = step_result.obs[0]
         reward = step_result.reward
-        done = step_result.done[0]
+        done = step_result.done
         agent.replay_buffer.add(state, action, reward, new_state)
     
         agent.learn()
@@ -72,24 +72,28 @@ def main():
         mean_step = sum(reward) / len(reward)
         acc_reward += mean_step
         mean_reward += mean_step
-        reward_cur_episode.append(reward[0])
+        reward_cur_episode += reward
         
-        summary.add_scalar("Reward/Step", mean_step);
+        summary.add_scalar("Reward/Step", mean_step)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
             mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
-            print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. reward; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
+            print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. rewards; {3:+.3f} step reward; {4}h elapsed" \
+                  .format(episode, steps, reward_mean_episode, mean_reward, format_timedelta(elapsed_time)))
             mean_reward = 0
 
-        if done:
-            reward_last_episode = sum(reward_cur_episode)
-            reward_cur_episode = []
+        for i, d in enumerate(done):
+            if d:
+                reward_last_episode[i] = reward_cur_episode[i]
+                reward_cur_episode[i] = 0
+
+        if done[0]:
+            reward_mean_episode = reward_last_episode.mean()
             duration_last_episode = time.time() - start_time_episode
             start_time_episode = time.time()
-            summary.add_scalar("Reward/Episode", reward_last_episode, True);
-            summary.add_scalar("Duration/Episode", duration_last_episode, True);
+            summary.add_scalar("Reward/Episode", reward_mean_episode, True)
+            summary.add_scalar("Duration/Episode", duration_last_episode, True)
             summary.adv_episode()
             episode += 1
 

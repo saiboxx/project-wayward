@@ -1,6 +1,6 @@
 import yaml
 import numpy as np
-from src.ddpg.networks import ActorNet, CriticNet
+from src.ddpg.networks import Actor2Layer, Critic2Layer, Actor3Layer, Critic3Layer
 from src.ddpg.ou_noise import OUNoise
 from torch import no_grad, from_numpy, tensor, normal, empty
 from torch.nn import MSELoss
@@ -12,8 +12,13 @@ class Actor(object):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-        self.network = ActorNet(observation_space, action_space, cfg["LAYER_SIZES"])
-        self.target = ActorNet(observation_space, action_space, cfg["LAYER_SIZES"])
+        if len(cfg["LAYER_SIZES"]) == 2:
+            self.network = Actor2Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+            self.target = Actor2Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+        else:
+            self.network = Actor3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+            self.target = Actor3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+
         self.optimizer = Adam(self.network.parameters(), lr=cfg["ACTOR_LEARNING_RATE"])
         self.ounoise = cfg["OUNOISE"]
         self.noise = OUNoise(mu=np.zeros(action_space))
@@ -50,8 +55,13 @@ class Critic(object):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-        self.network = CriticNet(observation_space, action_space, cfg["LAYER_SIZES"])
-        self.target = CriticNet(observation_space, action_space, cfg["LAYER_SIZES"])
+        if len(cfg["LAYER_SIZES"]) == 2:
+            self.network = Critic2Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+            self.target = Critic2Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+        else:
+            self.network = Critic3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+            self.target = Critic3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+
         self.optimizer = Adam(self.network.parameters(), lr=cfg["CRITIC_LEARNING_RATE"])
         self.loss = MSELoss()
 
