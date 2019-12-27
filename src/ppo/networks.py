@@ -22,13 +22,13 @@ class Actor2Layer(nn.Module):
         self.fc3.weight.data.uniform_(-0.003, 0.003)
         self.fc3.bias.data.uniform_(-0.003, 0.003)
 
-        self.std = nn.Parameter(tensor([std for _ in range(action_space)]))
+        self.log_std = nn.Parameter(tensor([std for _ in range(action_space)]))
 
     def forward(self, state: tensor) -> tensor:
         h1 = self.bn1(self.elu(self.fc1(state)))
         h2 = self.bn2(self.elu(self.fc2(h1)))
         mu = self.tanh(self.fc3(h2))
-        std = self.std.expand_as(mu)
+        std = self.log_std.exp().expand_as(mu)
         act_dist = Normal(mu, std)
         return act_dist
 
@@ -83,14 +83,14 @@ class Actor3Layer(nn.Module):
         self.fc4.weight.data.uniform_(-0.003, 0.003)
         self.fc4.bias.data.uniform_(-0.003, 0.003)
 
-        self.std = nn.Parameter(tensor([std for _ in range(action_space)]))
+        self.log_std = nn.Parameter(tensor([std for _ in range(action_space)]))
 
     def forward(self, state: tensor) -> tensor:
         h1 = self.bn1(self.elu(self.fc1(state)))
         h2 = self.bn2(self.elu(self.fc2(h1)))
         h3 = self.bn3(self.elu(self.fc3(h2)))
         mu = self.tanh(self.fc4(h3))
-        std = self.std.expand_as(mu)
+        std = self.log_std.exp().expand_as(mu)
         act_dist = Normal(mu, std)
         return act_dist
 
