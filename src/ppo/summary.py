@@ -13,16 +13,17 @@ class Summary(object):
     def hparams(self, cfg):
         dict = {
             "STEPS": cfg["STEPS"],
-            "OUNOISE": cfg["OUNOISE"],
-            "GAUSSIAN_START": cfg["GAUSSIAN_START"],
-            "GAUSSIAN_DECAY": cfg["GAUSSIAN_DECAY"],
-            "GAUSSIAN_MIN": cfg["GAUSSIAN_MIN"],
-            "BUFFER_SIZE": cfg["BUFFER_SIZE"],
-            "BATCH_SIZE": cfg["BATCH_SIZE"],
-            "ACTOR_LEARNING_RATE": cfg["ACTOR_LEARNING_RATE"],
-            "CRITIC_LEARNING_RATE": cfg["CRITIC_LEARNING_RATE"],
-            "TAU": cfg["TAU"],
-            "GAMMA": cfg["GAMMA"]
+            "PPO_BUFFER_SIZE": cfg["PPO_BUFFER_SIZE"],
+            "PPO_BATCH_SIZE": cfg["PPO_BATCH_SIZE"],
+            "PPO_EPOCHS": cfg["PPO_EPOCHS"],
+            "PPO_STD": cfg["PPO_STD"],
+            "PPO_GAMMA": cfg["PPO_GAMMA"],
+            "PPO_LAMBDA": cfg["PPO_LAMBDA"],
+            "PPO_EPSILON": cfg["PPO_EPSILON"],
+            "PPO_CRITIC_DISCOUNT": cfg["CRITIC_DISCOUNT"],
+            "PPO_ENTROPY_BETA": cfg["ENTROPY_BETA"],
+            "PPO_ACTOR_LEARNING_RATE": cfg["PPO_ACTOR_LEARNING_RATE"],
+            "PPO_CRITIC_LEARNING_RATE": cfg["PPO_CRITIC_LEARNING_RATE"]
         }
         i = 1
         for val in cfg["LAYER_SIZES"]:

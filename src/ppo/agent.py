@@ -92,9 +92,15 @@ class PPOAgent(object):
                 # Calculate losses
                 actor_loss = - torch.min(surr1, surr2).mean()
                 critic_loss = self.critic_loss(returns_batch, values)
-
+                
                 # Get total loss
                 loss = self.critic_discount * critic_loss + actor_loss - self.entropy_beta * entropy
+                
+                #Log losses in tensorboard
+                self.summary.add_scalar("Loss/Actor", actor_loss)
+                self.summary.add_scalar("Loss/Critic", critic_loss)
+                self.summary.add_scalar("Loss/Total", loss)
+                self.summary.add_scalar("Entropy", entropy)
 
                 # Backpropagate the error
                 self.actor_optimizer.zero_grad()
