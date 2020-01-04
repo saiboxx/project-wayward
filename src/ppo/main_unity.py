@@ -51,7 +51,7 @@ def run(cfg = []):
 
     start_time = time.time()
     for steps in range(1, cfg["STEPS"] + 1):
-        state = tensor(state).float().detach()
+        state = tensor(state).float().detach().to(agent.device)
         action_distribution = agent.actor(state)
         action = action_distribution.sample()
         log_prob = action_distribution.log_prob(action)

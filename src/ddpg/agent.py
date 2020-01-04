@@ -17,8 +17,14 @@ class DDPGAgent(object):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-        self.actor = Actor(observation_space, action_space)
-        self.critic = Critic(observation_space, action_space)
+        if cfg["UTILIZE_CUDA"]:
+            self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = torch.device('cpu')
+        print("Utilizing device {}.".format(self.device))
+
+        self.actor = Actor(observation_space, action_space, self.device)
+        self.critic = Critic(observation_space, action_space, self.device)
         self.replay_buffer = ReplayBuffer()
         self.gamma = cfg["GAMMA"]
         self.tau = cfg["TAU"]
@@ -29,10 +35,10 @@ class DDPGAgent(object):
         # Get experiences from replay buffer
         state, action, reward, new_state = self.replay_buffer.sample()
 
-        state = tensor(state).float()
-        action = tensor(action).float()
-        reward = tensor(reward).float()
-        new_state = tensor(new_state).float()
+        state = tensor(state).float().to(self.device)
+        action = tensor(action).float().to(self.device)
+        reward = tensor(reward).float().to(self.device)
+        new_state = tensor(new_state).float().to(self.device)
 
         # Calculate targets
         target_values = self.critic.predict(new_state,

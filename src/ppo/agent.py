@@ -25,11 +25,20 @@ class PPOAgent(object):
             self.actor = Actor3Layer(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
             self.critic = Critic3Layer(observation_space, cfg["LAYER_SIZES"])
 
+        if cfg["UTILIZE_CUDA"]:
+            self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = torch.device('cpu')
+
+        print("Utilizing device {}.".format(self.device))
+        self.actor.to(self.device)
+        self.critic.to(self.device)
+
         self.actor_optimizer = Adam(self.actor.parameters(), lr=cfg["PPO_ACTOR_LEARNING_RATE"])
         self.critic_optimizer = Adam(self.critic.parameters(), lr=cfg["PPO_CRITIC_LEARNING_RATE"])
         self.critic_loss = MSELoss()
 
-        self.replay_buffer = ReplayBuffer()
+        self.replay_buffer = ReplayBuffer(self.device)
         self.gamma = cfg["PPO_GAMMA"]
         self.lam = cfg["PPO_LAMBDA"]
         self.epsilon = cfg["PPO_EPSILON"]
@@ -52,7 +61,6 @@ class PPOAgent(object):
 
         advantage = returns - values
         advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
-        counter = 1
         for _ in range(self.epochs):
 
             # Get shuffled indices
@@ -70,14 +78,14 @@ class PPOAgent(object):
                 advantage_batch = advantage[ind, :]
 
                 # Get current extimates
-                action_distribution = self.actor(states_batch)
-                values = self.critic(states_batch)
+                action_distribution = self.actor(states_batch.to(self.device))
+                values = self.critic(states_batch.to(self.device))
 
                 # Calculate entropy of distribution
                 entropy = action_distribution.entropy().mean()
 
                 # Calculate new log probs
-                new_log_probs = action_distribution.log_prob(actions_batch)
+                new_log_probs = action_distribution.log_prob(actions_batch.to(self.device))
 
                 # Get ratio of new policy / old policy
                 ratio = (new_log_probs - log_probs_batch).exp()
@@ -107,7 +115,7 @@ class PPOAgent(object):
                 self.critic_optimizer.step()
 
     def get_returns(self, new_state: tensor) -> tensor:
-        new_value = self.critic(new_state)
+        new_value = self.critic(new_state.to(self.device))
         rewards = self.replay_buffer.rewards
         values = self.replay_buffer.values + [new_value]
         masks = self.replay_buffer.masks

@@ -2,15 +2,17 @@ import yaml
 import numpy as np
 from src.ddpg.networks import Actor2Layer, Critic2Layer, Actor3Layer, Critic3Layer
 from src.ddpg.ou_noise import OUNoise
-from torch import no_grad, from_numpy, tensor, normal, empty
+from torch import no_grad, from_numpy, tensor, empty, device
 from torch.nn import MSELoss
 from torch.optim import Adam
 
 
 class Actor(object):
-    def __init__(self, observation_space: int, action_space: int):
+    def __init__(self, observation_space: int, action_space: int, device: device):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+
+        self.device = device
 
         if len(cfg["LAYER_SIZES"]) == 2:
             self.network = Actor2Layer(observation_space, action_space, cfg["LAYER_SIZES"])
@@ -18,6 +20,9 @@ class Actor(object):
         else:
             self.network = Actor3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
             self.target = Actor3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+
+        self.network.to(self.device)
+        self.target.to(self.device)
 
         self.optimizer = Adam(self.network.parameters(), lr=cfg["ACTOR_LEARNING_RATE"])
         self.ounoise = cfg["OUNOISE"]
@@ -34,13 +39,13 @@ class Actor(object):
             else:
                 predictions = self.network(state)
                 if self.ounoise:
-                    return predictions + from_numpy(self.noise()).float()
+                    return predictions + from_numpy(self.noise()).float().to(self.device)
                 else:
                     if self.gaussian_std <= self.gaussian_min:
                         self.gaussian_std = self.gaussian_min
                     else:
                         self.gaussian_std -= self.noise_steps
-                    noise = empty(predictions.shape).normal_(mean=0, std=self.gaussian_std)
+                    noise = empty(predictions.shape).normal_(mean=0, std=self.gaussian_std).to(self.device)
                     return predictions + noise
 
     def update_target(self, tau: float):
@@ -51,9 +56,11 @@ class Actor(object):
 
 
 class Critic(object):
-    def __init__(self, observation_space: int, action_space: int):
+    def __init__(self, observation_space: int, action_space: int, device: device):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+
+        self.device = device
 
         if len(cfg["LAYER_SIZES"]) == 2:
             self.network = Critic2Layer(observation_space, action_space, cfg["LAYER_SIZES"])
@@ -61,6 +68,9 @@ class Critic(object):
         else:
             self.network = Critic3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
             self.target = Critic3Layer(observation_space, action_space, cfg["LAYER_SIZES"])
+
+        self.network.to(self.device)
+        self.target.to(self.device)
 
         self.optimizer = Adam(self.network.parameters(), lr=cfg["CRITIC_LEARNING_RATE"])
         self.loss = MSELoss()
