@@ -35,38 +35,40 @@ ENTROPY_BETA: 0.0001
 PPO_ACTOR_LEARNING_RATE: 0.001
 PPO_CRITIC_LEARNING_RATE: 0.001
 
-####################### PPO Optimizer ################
+###############################################################################
+# SET PARAMETERS FOR HYPERPARAMETER SEARCH WITH PPO
+###############################################################################
 
-#Number of times the environment is testet with new parameters
+# Number of times the environment is tested with new parameters
 OPT_PPO_RUNS: 25
 
 OPT_PPO_STEPS: 300000
 OPT_PPO_CHECKPOINTS: 50000
 OPT_PPO_VERBOSE_STEPS: 5000
 
-#Multiple of batch size
-#(=min (BUFFER_SIZE * BATCH_SIZE, 409600)
-#Uniform range (int)
+# Multiple of batch size
+# (=min (BUFFER_SIZE * BATCH_SIZE, 409600)
+# Uniform range (int)
 OPT_PPO_BUFFER_SIZE: [4, 400]
-#Choices
-OPT_PPO_BATCH_SIZE: [1024, 2048, 4096] 
-#Uniform distr range (int)
+# Choices
+OPT_PPO_BATCH_SIZE: [512, 1024, 2048, 4096]
+# Uniform distr range (int)
 OPT_PPO_EPOCHS: [3, 10]
-#Normal distr (mean, std)
-OPT_PPO_STD: [1.0, 0.0]
-#Uniform distr range (float)
+# Uniform distr range (float)
+OPT_PPO_STD: [-3.0 , 0.0]
+# Uniform distr range (float)
 OPT_PPO_GAMMA: [0.9, 0.9999]
-#Uniform distr range (float)
-OPT_PPO_LAMBDA: [0.9, 0.95]
-#Choices
-OPT_PPO_EPSILON: [0.1, 0.2, 0.3]
-#Uniform range (float)
-OPT_CRITIC_DISCOUNT: [0.5, 1.0]
-#Uniform distr range (float)
+# Uniform distr range (float)
+OPT_PPO_LAMBDA: [0.85, 0.99]
+# Uniform range (float)
+OPT_PPO_EPSILON: [0.05, 0.5]
+# Uniform range (float)
+OPT_CRITIC_DISCOUNT: [0.1, 1.0]
+# Uniform distr range (float)
 OPT_ENTROPY_BETA: [0.0001, 0.01]
-#Uniform distr range (float)
+# Uniform distr range (float)
 OPT_PPO_ACTOR_LEARNING_RATE: [0.00001, 0.001]
-#Uniform distr range (float)
+# Uniform distr range (float)
 OPT_PPO_CRITIC_LEARNING_RATE: [0.00001, 0.001]
 
 ###############################################################################

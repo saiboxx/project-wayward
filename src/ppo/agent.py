@@ -77,7 +77,7 @@ class PPOAgent(object):
                 returns_batch = returns[ind, :]
                 advantage_batch = advantage[ind, :]
 
-                # Get current extimates
+                # Get current estimates
                 action_distribution = self.actor(states_batch.to(self.device))
                 values = self.critic(states_batch.to(self.device))
 
