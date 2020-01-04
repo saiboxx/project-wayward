@@ -92,3 +92,5 @@ executables
 csharp_timers.json
 models/
 runs/*
+runs_ppo/*
+runs_ddpg/*
