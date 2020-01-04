@@ -1,16 +1,16 @@
 import random
 import numpy as np
 import yaml
-from torch import tensor
-from operator import itemgetter
+from torch import tensor, device
 
 
 class ReplayBuffer(object):
 
-    def __init__(self):
+    def __init__(self, device: device):
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
+        self.device = device
         self.states = []
         self.actions = []
         self.rewards = []
@@ -24,19 +24,19 @@ class ReplayBuffer(object):
 
         """
         if isinstance(reward, np.ndarray):
-            self.states.append(state)
-            self.actions.append(action)
-            self.rewards.append(tensor(reward).unsqueeze(1))
-            self.masks.append(tensor(1 - done).unsqueeze(1))
-            self.log_probs.append(log_prob)
-            self.values.append(value)
+            self.states.append(state.to(self.device))
+            self.actions.append(action.to(self.device))
+            self.rewards.append(tensor(reward).unsqueeze(1).to(self.device))
+            self.masks.append(tensor(1 - done).unsqueeze(1).to(self.device))
+            self.log_probs.append(log_prob.to(self.device))
+            self.values.append(value.to(self.device))
         else:
-            self.states.append(state)
-            self.actions.append(action)
-            self.rewards.append(tensor(reward))
-            self.masks.append(tensor(1 - done))
-            self.log_probs.append(log_prob)
-            self.values.append(value)
+            self.states.append(state.to(self.device))
+            self.actions.append(action.to(self.device))
+            self.rewards.append(tensor(reward).to(self.device))
+            self.masks.append(tensor(1 - done).to(self.device))
+            self.log_probs.append(log_prob.to(self.device))
+            self.values.append(value.to(self.device))
 
     def reset(self):
         self.states = []
