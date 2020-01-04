@@ -12,11 +12,15 @@ from src.ppo.summary import Summary
 
 
 def main():
+    run([])
+
+def run(cfg = []):
     """"
     <TBD>
     """
-    with open("config.yml", 'r') as ymlfile:
-        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    if cfg == []:
+        with open("config.yml", 'r') as ymlfile:
+            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
     worker_id = np.random.randint(20)
@@ -33,7 +37,7 @@ def main():
     summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = PPOAgent(observation_space, action_space, summary)
+    agent = PPOAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
@@ -41,6 +45,7 @@ def main():
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
     reward_mean_episode = 0
+    max_reward_mean_episode = 0
     start_time_episode = time.time()
     episode = 1
 
@@ -86,6 +91,7 @@ def main():
 
         if done[0]:
             reward_mean_episode = reward_last_episode.mean()
+            max_reward_mean_episode = max(reward_mean_episode, max_reward_mean_episode)
             duration_last_episode = time.time() - start_time_episode
             start_time_episode = time.time()
             summary.add_scalar("Reward/Episode", reward_mean_episode, True)
@@ -103,9 +109,8 @@ def main():
 
     print("Closing environment.")
     env.close()
-    summary.writer.flush()
-    summary.writer.close()
-
+    summary.close(max_reward_mean_episode)
+    return max_reward_mean_episode
 
 def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
         -> Tuple[UnityEnvironment, EngineConfigurationChannel]:

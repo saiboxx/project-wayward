@@ -1,4 +1,4 @@
-PYTHON_INTERPRETER = python3
+PYTHON_INTERPRETER = python
 
 ## Install Python Dependencies
 requirements:
@@ -10,6 +10,10 @@ train-ddpg:
 	$(PYTHON_INTERPRETER) src/ddpg/main_unity.py
 train-ppo:
 	$(PYTHON_INTERPRETER) src/ppo/main_unity.py
+
+## Start hyperparameter optimization
+opt-ppo:
+	$(PYTHON_INTERPRETER) src/ppo/optimizer.py
 
 ## Start training an agent in a gym dummy environment
 mock-ddpg:

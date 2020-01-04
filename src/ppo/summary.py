@@ -1,21 +1,26 @@
 from torch.utils.tensorboard import SummaryWriter
-
+import os
+from datetime import datetime
 
 class Summary(object):
     def __init__(self, cfg):
-        self.writer = SummaryWriter()
-        #self.writer.add_text("Config/Executable", cfg["EXECUTABLE"])
-        #self.writer.add_text("Config/Graphics", str(cfg["NO_GRAPHICS"]))
-        self.writer.add_hparams(self.hparams(cfg),dict())
+        folder = cfg["SUMMARY_FOLDER"]
+        
+        if(folder is None):
+            date_string = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            folder = os.path.join("runs_ppo", date_string)
+        
+        self.writer = SummaryWriter(log_dir=folder)
         self.step = 1
         self.episode = 1
+        self.cfg = cfg
   
     def hparams(self, cfg):
         dict = {
-            "STEPS": cfg["STEPS"],
-            "PPO_BUFFER_SIZE": cfg["PPO_BUFFER_SIZE"],
-            "PPO_BATCH_SIZE": cfg["PPO_BATCH_SIZE"],
-            "PPO_EPOCHS": cfg["PPO_EPOCHS"],
+            "STEPS": int(cfg["STEPS"]),
+            "PPO_BUFFER_SIZE": int(cfg["PPO_BUFFER_SIZE"]),
+            "PPO_BATCH_SIZE": int(cfg["PPO_BATCH_SIZE"]),
+            "PPO_EPOCHS": int(cfg["PPO_EPOCHS"]),
             "PPO_STD": cfg["PPO_STD"],
             "PPO_GAMMA": cfg["PPO_GAMMA"],
             "PPO_LAMBDA": cfg["PPO_LAMBDA"],
@@ -25,6 +30,7 @@ class Summary(object):
             "PPO_ACTOR_LEARNING_RATE": cfg["PPO_ACTOR_LEARNING_RATE"],
             "PPO_CRITIC_LEARNING_RATE": cfg["PPO_CRITIC_LEARNING_RATE"]
         }
+        print(dict)
         i = 1
         for val in cfg["LAYER_SIZES"]:
             dict["LAYER_" + str(i)] = val
@@ -43,3 +49,8 @@ class Summary(object):
     
     def adv_episode(self):
         self.episode += 1
+        
+    def close(self, max_reward):
+        self.writer.add_hparams(self.hparams(self.cfg),{"MAX_REWARD": max_reward})
+        self.writer.flush()
+        self.writer.close()

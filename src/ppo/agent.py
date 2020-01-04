@@ -17,10 +17,7 @@ class PPOAgent(object):
     Depicts the acting Entity.
     """
 
-    def __init__(self, observation_space: int, action_space: int, summary: Summary):
-        with open("config.yml", 'r') as ymlfile:
-            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
-
+    def __init__(self, observation_space: int, action_space: int, cfg, summary: Summary):
         if len(cfg["LAYER_SIZES"]) == 2:
             self.actor = Actor2Layer(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
             self.critic = Critic2Layer(observation_space, cfg["LAYER_SIZES"])

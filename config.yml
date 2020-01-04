@@ -7,6 +7,8 @@ VERBOSE_STEPS: 1000
 CHECKPOINTS: 50000
 NO_GRAPHICS: False
 TIME_SCALE: 50.0
+#Leave empty for auto mode
+SUMMARY_FOLDER:
 
 LAYER_SIZES:
   - 256
@@ -31,6 +33,40 @@ ENTROPY_BETA: 0.0001
 
 PPO_ACTOR_LEARNING_RATE: 0.001
 PPO_CRITIC_LEARNING_RATE: 0.001
+
+####################### PPO Optimizer ################
+
+#Number of times the environment is testet with new parameters
+OPT_PPO_RUNS: 25
+
+OPT_PPO_STEPS: 300000
+OPT_PPO_CHECKPOINTS: 50000
+OPT_PPO_VERBOSE_STEPS: 5000
+
+#Multiple of batch size
+#(=min (BUFFER_SIZE * BATCH_SIZE, 409600)
+#Uniform range (int)
+OPT_PPO_BUFFER_SIZE: [4, 400]
+#Choices
+OPT_PPO_BATCH_SIZE: [1024, 2048, 4096] 
+#Uniform distr range (int)
+OPT_PPO_EPOCHS: [3, 10]
+#Normal distr (mean, std)
+OPT_PPO_STD: [1.0, 0.0]
+#Uniform distr range (float)
+OPT_PPO_GAMMA: [0.9, 0.9999]
+#Uniform distr range (float)
+OPT_PPO_LAMBDA: [0.9, 0.95]
+#Choices
+OPT_PPO_EPSILON: [0.1, 0.2, 0.3]
+#Uniform range (float)
+OPT_CRITIC_DISCOUNT: [0.5, 1.0]
+#Uniform distr range (float)
+OPT_ENTROPY_BETA: [0.0001, 0.01]
+#Uniform distr range (float)
+OPT_PPO_ACTOR_LEARNING_RATE: [0.00001, 0.001]
+#Uniform distr range (float)
+OPT_PPO_CRITIC_LEARNING_RATE: [0.00001, 0.001]
 
 ###############################################################################
 # SET PARAMETERS FOR TRAINING WITH DDPG
