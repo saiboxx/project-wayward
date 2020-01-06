@@ -45,7 +45,7 @@ def run(cfg = []):
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
     reward_mean_episode = 0
-    max_reward_mean_episode = 0
+    rolling_reward_mean_episode = []
     start_time_episode = time.time()
     episode = 1
 
@@ -87,11 +87,13 @@ def run(cfg = []):
         for i, d in enumerate(done):
             if d:
                 reward_last_episode[i] = reward_cur_episode[i]
+                if steps >= cfg["STEPS"]*0.9:
+                    rolling_reward_mean_episode.append(reward_cur_episode[i])
                 reward_cur_episode[i] = 0
+
 
         if done[0]:
             reward_mean_episode = reward_last_episode.mean()
-            max_reward_mean_episode = max(reward_mean_episode, max_reward_mean_episode)
             duration_last_episode = time.time() - start_time_episode
             start_time_episode = time.time()
             summary.add_scalar("Reward/Episode", reward_mean_episode, True)
@@ -109,6 +111,7 @@ def run(cfg = []):
 
     print("Closing environment.")
     env.close()
+    max_reward_mean_episode = np.mean(rolling_reward_mean_episode)
     summary.close(max_reward_mean_episode)
     return max_reward_mean_episode
 
