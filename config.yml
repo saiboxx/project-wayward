@@ -1,12 +1,79 @@
 ###############################################################################
-# SET PARAMETERS FOR TRAINING
+# SET GENERAL PARAMETERS
 ###############################################################################
 EXECUTABLE: crawler
-STEPS: 100000
+STEPS: 1000000
 VERBOSE_STEPS: 1000
-CHECKPOINTS: 20000
+CHECKPOINTS: 50000
 NO_GRAPHICS: False
+UTILIZE_CUDA: True
+TIME_SCALE: 50.0
+#Leave empty for auto mode
+SUMMARY_FOLDER:
 
+LAYER_SIZES:
+  - 256
+  - 256
+  - 256
+
+###############################################################################
+# SET PARAMETERS FOR TRAINING WITH PPO
+###############################################################################
+PPO_BUFFER_SIZE: 20480
+PPO_BATCH_SIZE: 2048
+PPO_EPOCHS: 3
+
+PPO_STD: 0.0
+
+
+PPO_GAMMA: 0.99
+PPO_LAMBDA: 0.95
+PPO_EPSILON: 0.2
+CRITIC_DISCOUNT: 0.5
+ENTROPY_BETA: 0.0001
+
+PPO_ACTOR_LEARNING_RATE: 0.001
+PPO_CRITIC_LEARNING_RATE: 0.001
+
+###############################################################################
+# SET PARAMETERS FOR HYPERPARAMETER SEARCH WITH PPO
+###############################################################################
+
+# Number of times the environment is tested with new parameters
+OPT_PPO_RUNS: 25
+
+OPT_PPO_STEPS: 300000
+OPT_PPO_CHECKPOINTS: 50000
+OPT_PPO_VERBOSE_STEPS: 5000
+
+# Multiple of batch size
+# (=min (BUFFER_SIZE * BATCH_SIZE, 409600)
+# Uniform range (int)
+OPT_PPO_BUFFER_SIZE: [4, 400]
+# Choices
+OPT_PPO_BATCH_SIZE: [512, 1024, 2048, 4096]
+# Uniform distr range (int)
+OPT_PPO_EPOCHS: [3, 10]
+# Uniform distr range (float)
+OPT_PPO_STD: [-3.0 , 0.0]
+# Uniform distr range (float)
+OPT_PPO_GAMMA: [0.9, 0.9999]
+# Uniform distr range (float)
+OPT_PPO_LAMBDA: [0.85, 0.99]
+# Uniform range (float)
+OPT_PPO_EPSILON: [0.05, 0.5]
+# Uniform range (float)
+OPT_CRITIC_DISCOUNT: [0.1, 1.0]
+# Uniform distr range (float)
+OPT_ENTROPY_BETA: [0.0001, 0.01]
+# Uniform distr range (float)
+OPT_PPO_ACTOR_LEARNING_RATE: [0.00001, 0.001]
+# Uniform distr range (float)
+OPT_PPO_CRITIC_LEARNING_RATE: [0.00001, 0.001]
+
+###############################################################################
+# SET PARAMETERS FOR TRAINING WITH DDPG
+###############################################################################
 OUNOISE: False
 
 GAUSSIAN_START: 1.0
@@ -22,16 +89,11 @@ CRITIC_LEARNING_RATE: 0.0001
 TAU: 0.9999
 GAMMA: 0.99
 
-
-LAYER_SIZES:
-  - 256
-  - 256
-
 ###############################################################################
 # SET PARAMETERS FOR RUN
 ###############################################################################
 RUN_EXECUTABLE: crawler
-RUN_MODEL: models/crawler/actor_target_100000.pt
+RUN_MODEL: models/vm_crawler/actor_3000000.pt
 RUN_STEPS: 10000
 RUN_VERBOSE_STEPS: 1000
 RUN_NO_GRAPHICS: False

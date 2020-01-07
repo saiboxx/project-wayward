@@ -1,4 +1,4 @@
-PYTHON_INTERPRETER = python3
+PYTHON_INTERPRETER = python
 
 ## Install Python Dependencies
 requirements:
@@ -6,12 +6,20 @@ requirements:
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 
 ## Start training an agent
-train:
-	$(PYTHON_INTERPRETER) src/main_unity.py
+train-ddpg:
+	$(PYTHON_INTERPRETER) src/ddpg/main_unity.py
+train-ppo:
+	$(PYTHON_INTERPRETER) src/ppo/main_unity.py
+
+## Start hyperparameter optimization
+opt-ppo:
+	$(PYTHON_INTERPRETER) src/ppo/optimizer.py
 
 ## Start training an agent in a gym dummy environment
-mock:
-	$(PYTHON_INTERPRETER) src/main_gym.py
+mock-ddpg:
+	$(PYTHON_INTERPRETER) src/ddpg/main_gym.py
+mock-ppo:
+	$(PYTHON_INTERPRETER) src/ppo/main_gym.py
 
 ## Load a model and observe agent
 run:

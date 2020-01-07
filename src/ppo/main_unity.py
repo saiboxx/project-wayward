@@ -5,23 +5,27 @@ import numpy as np
 from typing import Tuple
 from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
-from torch import from_numpy
-from tqdm import tqdm
+from torch import tensor
 
-from src.agent import Agent
-from src.summary import Summary
+from src.ppo.agent import PPOAgent
+from src.ppo.summary import Summary
 
 
 def main():
+    run([])
+
+def run(cfg = []):
     """"
     <TBD>
     """
-    with open("config.yml", 'r') as ymlfile:
-        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    if cfg == []:
+        with open("config.yml", 'r') as ymlfile:
+            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
     worker_id = np.random.randint(20)
     env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
+    config_channel.set_configuration_parameters(time_scale=cfg["TIME_SCALE"])
     env.reset()
     group_name = env.get_agent_groups()[0]
     group_spec = env.get_agent_group_spec(group_name)
@@ -33,63 +37,67 @@ def main():
     summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = Agent(observation_space, action_space, summary)
+    agent = PPOAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
     mean_reward = 0
-    reward_cur_episode = []
-    reward_last_episode = 0
+    reward_cur_episode = np.zeros(num_agents)
+    reward_last_episode = np.zeros(num_agents)
+    reward_mean_episode = 0
+    rolling_reward_mean_episode = []
     start_time_episode = time.time()
     episode = 1
 
-    print("Initiating with warm-up phase")
-    for b in tqdm(range(cfg["BUFFER_SIZE"]//num_agents)):
-        action = np.random.uniform(-1, 1, size=(len(state), action_space))
-        env.set_actions(group_name, action)
-        env.step()
-        step_result = env.get_step_result(group_name)
-        new_state = step_result.obs[0]
-        reward = step_result.reward
-        done = step_result.done[0]
-        agent.replay_buffer.add(state, action, reward, new_state)
-
     start_time = time.time()
     for steps in range(1, cfg["STEPS"] + 1):
-        action = agent.actor.predict(from_numpy(np.array(state)).float(), use_target=False)
-        action = action.cpu().numpy()
-        
-        env.set_actions(group_name, action)
+        state = tensor(state).float().detach().to(agent.device)
+        action_distribution = agent.actor(state)
+        action = action_distribution.sample()
+        log_prob = action_distribution.log_prob(action)
+        value = agent.critic(state)
+
+        env.set_actions(group_name, action.cpu().numpy())
         env.step()
         step_result = env.get_step_result(group_name)
         new_state = step_result.obs[0]
         reward = step_result.reward
-        done = step_result.done[0]
-        agent.replay_buffer.add(state, action, reward, new_state)
-    
-        agent.learn()
+        done = step_result.done
+        agent.replay_buffer.add(state, action, reward, done, log_prob, value)
+
+        if steps % (cfg["PPO_BUFFER_SIZE"] // num_agents) == 0:
+            returns = agent.get_returns(tensor(new_state).float())
+            agent.learn(returns)
+            agent.replay_buffer.reset()
 
         mean_step = sum(reward) / len(reward)
         acc_reward += mean_step
         mean_reward += mean_step
-        reward_cur_episode.append(reward[0])
-        
-        summary.add_scalar("Reward/Step", mean_step);
+        reward_cur_episode += reward
+
+        summary.add_scalar("Reward/Step", mean_step)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
             mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
-            print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. reward; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
+            print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. rewards; {3:+.3f} step reward; {4}h elapsed" \
+                  .format(episode, steps, reward_mean_episode, mean_reward, format_timedelta(elapsed_time)))
             mean_reward = 0
 
-        if done:
-            reward_last_episode = sum(reward_cur_episode)
-            reward_cur_episode = []
+        for i, d in enumerate(done):
+            if d:
+                reward_last_episode[i] = reward_cur_episode[i]
+                if steps >= cfg["STEPS"]*0.9:
+                    rolling_reward_mean_episode.append(reward_cur_episode[i])
+                reward_cur_episode[i] = 0
+
+
+        if done[0]:
+            reward_mean_episode = reward_last_episode.mean()
             duration_last_episode = time.time() - start_time_episode
             start_time_episode = time.time()
-            summary.add_scalar("Reward/Episode", reward_last_episode, True);
-            summary.add_scalar("Duration/Episode", duration_last_episode, True);
+            summary.add_scalar("Reward/Episode", reward_mean_episode, True)
+            summary.add_scalar("Duration/Episode", duration_last_episode, True)
             summary.adv_episode()
             episode += 1
 
@@ -103,9 +111,9 @@ def main():
 
     print("Closing environment.")
     env.close()
-    summary.writer.flush()
-    summary.writer.close()
-
+    max_reward_mean_episode = np.mean(rolling_reward_mean_episode)
+    summary.close(max_reward_mean_episode)
+    return max_reward_mean_episode
 
 def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
         -> Tuple[UnityEnvironment, EngineConfigurationChannel]:
@@ -134,6 +142,7 @@ def format_timedelta(timedelta):
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return '{:0>2d}:{:0>2d}:{:0>2d}'.format(hours, minutes, seconds)
+
 
 if __name__ == '__main__':
     main()

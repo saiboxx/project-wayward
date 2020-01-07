@@ -3,6 +3,7 @@ numpy
 torch
 gym[all]
 tqdm
+hyperopt
 
 # local package
 -e .
