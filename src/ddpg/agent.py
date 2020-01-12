@@ -25,7 +25,7 @@ class DDPGAgent(object):
 
         self.actor = Actor(observation_space, action_space, self.device)
         self.critic = Critic(observation_space, action_space, self.device)
-        self.replay_buffer = ReplayBuffer()
+        self.replay_buffer = ReplayBuffer(observation_space, action_space)
         self.gamma = cfg["GAMMA"]
         self.tau = cfg["TAU"]
         self.output_path = os.path.join("models", cfg["EXECUTABLE"])
