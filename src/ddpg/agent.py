@@ -14,7 +14,7 @@ class DDPGAgent(object):
     """
 
     def __init__(self, observation_space: int, action_space: int, summary: Summary):
-        with open("config.yml", 'r') as ymlfile:
+        with open(os.path.join("..", "..", "config.yml"), 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
         if cfg["UTILIZE_CUDA"]:
@@ -25,7 +25,7 @@ class DDPGAgent(object):
 
         self.actor = Actor(observation_space, action_space, self.device)
         self.critic = Critic(observation_space, action_space, self.device)
-        self.replay_buffer = ReplayBuffer(observation_space, action_space)
+        self.replay_buffer = ReplayBuffer(cfg["BUFFER_SIZE"], cfg["BATCH_SIZE"], observation_space, action_space)
         self.gamma = cfg["GAMMA"]
         self.tau = cfg["TAU"]
         self.output_path = os.path.join("models", cfg["EXECUTABLE"])
