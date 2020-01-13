@@ -14,6 +14,8 @@ train-ppo:
 ## Start hyperparameter optimization
 opt-ppo:
 	$(PYTHON_INTERPRETER) src/ppo/optimizer.py
+opt-ddpg:
+	$(PYTHON_INTERPRETER) src/ddpg/optimizer.py
 
 ## Start training an agent in a gym dummy environment
 mock-ddpg:

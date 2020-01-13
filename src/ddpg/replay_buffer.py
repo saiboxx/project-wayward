@@ -5,9 +5,7 @@ from operator import itemgetter
 
 class ReplayBuffer(object):
 
-    def __init__(self):
-        with open("config.yml", 'r') as ymlfile:
-            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    def __init__(self, cfg):
 
         self.max_buffer_size = cfg["BUFFER_SIZE"]
         self.cur_buffer_size = 0
