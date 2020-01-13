@@ -4,7 +4,7 @@ import time
 import gym
 import numpy as np
 from torch import from_numpy, save
-from src.ddpg.agent import DDPGAgent
+from src.ddpg.agent import Agent
 from src.ddpg.summary import Summary
 
 
@@ -24,7 +24,7 @@ def main():
     summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = DDPGAgent(observation_space, action_space, summary)
+    agent = Agent(observation_space, action_space, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
