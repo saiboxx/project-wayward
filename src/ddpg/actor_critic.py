@@ -8,10 +8,7 @@ from torch.optim import Adam
 
 
 class Actor(object):
-    def __init__(self, observation_space: int, action_space: int, device: device):
-        with open("config.yml", 'r') as ymlfile:
-            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
-
+    def __init__(self, observation_space: int, action_space: int, device: device, cfg):
         self.device = device
 
         if len(cfg["LAYER_SIZES"]) == 2:
@@ -56,10 +53,7 @@ class Actor(object):
 
 
 class Critic(object):
-    def __init__(self, observation_space: int, action_space: int, device: device):
-        with open("config.yml", 'r') as ymlfile:
-            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
-
+    def __init__(self, observation_space: int, action_space: int, device: device, cfg):
         self.device = device
 
         if len(cfg["LAYER_SIZES"]) == 2:

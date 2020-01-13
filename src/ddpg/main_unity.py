@@ -11,13 +11,16 @@ from tqdm import tqdm
 from src.ddpg.agent import DDPGAgent
 from src.ddpg.summary import Summary
 
-
 def main():
+    run([])
+
+def run(cfg = []):
     """"
     <TBD>
     """
-    with open("config.yml", 'r') as ymlfile:
-        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    if cfg == []:
+        with open("config.yml", 'r') as ymlfile:
+            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
     worker_id = np.random.randint(20)
@@ -34,7 +37,7 @@ def main():
     summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = DDPGAgent(observation_space, action_space, summary)
+    agent = DDPGAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
     acc_reward = 0
@@ -42,6 +45,7 @@ def main():
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
     reward_mean_episode = 0
+    rolling_reward_mean_episode = []
     start_time_episode = time.time()
     episode = 1
 
@@ -87,6 +91,8 @@ def main():
         for i, d in enumerate(done):
             if d:
                 reward_last_episode[i] = reward_cur_episode[i]
+                if steps >= cfg["STEPS"]*0.9:
+                    rolling_reward_mean_episode.append(reward_cur_episode[i])
                 reward_cur_episode[i] = 0
 
         if done[0]:
@@ -108,8 +114,9 @@ def main():
 
     print("Closing environment.")
     env.close()
-    summary.writer.flush()
-    summary.writer.close()
+    max_reward_mean_episode = np.mean(rolling_reward_mean_episode)
+    summary.close(max_reward_mean_episode)
+    return max_reward_mean_episode
 
 
 def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
