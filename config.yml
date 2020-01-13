@@ -102,16 +102,16 @@ OPT_DDPG_VERBOSE_STEPS: 5000
 
 
 #Uniform range (float)
-OPT_DDPG_GAUSS_START: [0.9, 1.0]
+OPT_DDPG_GAUSS_START: [0.5, 1.0]
 #Uniform range (float)
 OPT_DDPG_GAUSS_DECAY: [0.5, 0.9]
 #Uniform range (float)
 OPT_DDPG_GAUSS_MIN: [0.05, 0.25]
 
 # Uniform range (int)
-OPT_DDPG_BUFFER_SIZE: [1000, 1000]
+OPT_DDPG_BUFFER_SIZE: [10000, 1000000]
 # Choices
-OPT_DDPG_BATCH_SIZE: [8, 16, 32, 64]
+OPT_DDPG_BATCH_SIZE: [16, 32, 64]
 
 # Uniform distr range (float)
 OPT_DDPG_ACTOR_LEARNING_RATE: [0.00001, 0.001]
@@ -119,7 +119,7 @@ OPT_DDPG_ACTOR_LEARNING_RATE: [0.00001, 0.001]
 OPT_DDPG_CRITIC_LEARNING_RATE: [0.00001, 0.001]
 
 # Uniform range (float)
-OPT_DDPG_TAU: [0.999, 0.99999]
+OPT_DDPG_TAU: [0.99, 0.99999]
 # Uniform distr range (float)
 OPT_DDPG_GAMMA: [0.98, 0.999]
 
