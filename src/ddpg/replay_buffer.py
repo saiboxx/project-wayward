@@ -1,18 +1,13 @@
-import random
 import numpy as np
-import yaml
-from operator import itemgetter
 
 
 class ReplayBuffer(object):
 
-    def __init__(self, state_size, action_size):
-        with open("config.yml", 'r') as ymlfile:
-            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    def __init__(self, max_buffer_size, batch_size, state_size, action_size):
 
-        self.max_buffer_size = cfg["BUFFER_SIZE"]
+        self.max_buffer_size = max_buffer_size
         self.cur_buffer_size = 0
-        self.batch_size = cfg["BATCH_SIZE"]
+        self.batch_size = batch_size
         self.states = np.empty((self.max_buffer_size, state_size), dtype=np.float64)
         self.actions = np.empty((self.max_buffer_size, action_size), dtype=np.uint8)
         self.rewards = np.empty(self.max_buffer_size, dtype=np.integer)
