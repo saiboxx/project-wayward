@@ -13,19 +13,16 @@ class DDPGAgent(object):
     Depicts the acting Entity.
     """
 
-    def __init__(self, observation_space: int, action_space: int, summary: Summary):
-        with open("config.yml", 'r') as ymlfile:
-            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
-
+    def __init__(self, observation_space: int, action_space: int, cfg, summary: Summary):
         if cfg["UTILIZE_CUDA"]:
             self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         else:
             self.device = torch.device('cpu')
         print("Utilizing device {}.".format(self.device))
 
-        self.actor = Actor(observation_space, action_space, self.device)
-        self.critic = Critic(observation_space, action_space, self.device)
-        self.replay_buffer = ReplayBuffer()
+        self.actor = Actor(observation_space, action_space, self.device, cfg)
+        self.critic = Critic(observation_space, action_space, self.device, cfg)
+        self.replay_buffer = ReplayBuffer(cfg)
         self.gamma = cfg["GAMMA"]
         self.tau = cfg["TAU"]
         self.output_path = os.path.join("models", cfg["EXECUTABLE"])
