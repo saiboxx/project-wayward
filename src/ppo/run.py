@@ -18,24 +18,25 @@ def main():
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["RUN_EXECUTABLE"]))
-    worker_id = 1
+    worker_id = np.random.randint(20)
     env, config_channel = load_environment(cfg["RUN_EXECUTABLE"], cfg["RUN_NO_GRAPHICS"], worker_id)
     env.reset()
     group_name = env.get_agent_groups()[0]
-    group_spec = env.get_agent_group_spec(group_name)
     step_result = env.get_step_result(group_name)
     state = step_result.obs[0]
+    num_agents = len(state)
 
     print("Loading Model.")
     actor = torch.load(cfg["RUN_MODEL"])
+    actor.eval()
 
     print("Starting Run with {} steps.".format(cfg["RUN_STEPS"]))
     acc_reward = 0
     mean_reward = 0
-    reward_cur_episode = []
-    mean_reward_episodes = 0
+    reward_cur_episode = np.zeros(num_agents)
+    reward_last_episode = np.zeros(num_agents)
+    reward_mean_episode = 0
     episode = 1
-    reward_last_episode = 0
     start_time = time.time()
     for steps in range(1, cfg["RUN_STEPS"] + 1):
         with torch.no_grad():
@@ -47,31 +48,24 @@ def main():
         step_result = env.get_step_result(group_name)
         new_state = step_result.obs[0]
         reward = step_result.reward
-        done = step_result.done[0]
+        done = step_result.done
 
         mean_step = sum(reward) / len(reward)
-        acc_reward += mean_step
-        mean_reward += mean_step
-        reward_cur_episode.append(reward[0])
+        reward_cur_episode += reward
 
-        if episode % cfg["RUN_VERBOSE_STEPS"] == 0:
-            mean_reward = mean_reward / cfg["VERBOSE_EPISODES"]
+        for i, d in enumerate(done):
+            if d:
+                reward_last_episode[i] = reward_cur_episode[i]
+                reward_cur_episode[i] = 0
+
+        if done[0]:
+            reward_mean_episode = reward_last_episode.mean()
             elapsed_time = time.time() - start_time
-            print("Ep {0:>4} with {1:>7} steps total; {2:8.3f} mean ep. reward; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, mean_reward_episodes, mean_reward, format_timedelta(elapsed_time)))
-            mean_reward = 0
-
-        if done:
-            mean_reward = mean_reward / cfg["RUN_VERBOSE_STEPS"]
-            elapsed_time = time.time() - start_time
-            print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. reward; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
-            mean_reward = 0
-
-        if done:
-            reward_last_episode = sum(reward_cur_episode)
-            reward_cur_episode = []
+            print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. rewards; {3}h elapsed" \
+                  .format(episode, steps, reward_mean_episode, format_timedelta(elapsed_time)))
             episode += 1
+
+        state = new_state
 
     print("Closing environment.")
     env.close()

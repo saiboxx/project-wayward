@@ -24,8 +24,10 @@ mock-ppo:
 	$(PYTHON_INTERPRETER) src/ppo/main_gym.py
 
 ## Load a model and observe agent
-run:
-	$(PYTHON_INTERPRETER) src/run.py
+run-ddpg:
+	$(PYTHON_INTERPRETER) src/ddpg/run.py
+run-ppo:
+	$(PYTHON_INTERPRETER) src/ppo/run.py
 
 ## Set up python interpreter environment
 create_environment:

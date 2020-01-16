@@ -11,10 +11,12 @@ from tqdm import tqdm
 from src.ddpg.agent import DDPGAgent
 from src.ddpg.summary import Summary
 
+
 def main():
     run([])
 
-def run(cfg = []):
+
+def run(cfg=[]):
     """"
     <TBD>
     """
@@ -40,7 +42,6 @@ def run(cfg = []):
     agent = DDPGAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
-    acc_reward = 0
     mean_reward = 0
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
@@ -50,7 +51,7 @@ def run(cfg = []):
     episode = 1
 
     print("Initiating with warm-up phase")
-    for b in tqdm(range(cfg["BUFFER_SIZE"]//num_agents)):
+    for b in tqdm(range(cfg["BUFFER_SIZE"] // num_agents)):
         action = np.random.uniform(-1, 1, size=(len(state), action_space))
         env.set_actions(group_name, action)
         env.step()
@@ -63,7 +64,7 @@ def run(cfg = []):
     for steps in range(1, cfg["STEPS"] + 1):
         action = agent.actor.predict(tensor(state).float().to(agent.device), use_target=False)
         action = action.cpu().numpy()
-        
+
         env.set_actions(group_name, action)
         env.step()
         step_result = env.get_step_result(group_name)
@@ -71,14 +72,13 @@ def run(cfg = []):
         reward = step_result.reward
         done = step_result.done
         agent.replay_buffer.add(state, action, reward, new_state)
-    
+
         agent.learn()
 
         mean_step = sum(reward) / len(reward)
-        acc_reward += mean_step
         mean_reward += mean_step
         reward_cur_episode += reward
-        
+
         summary.add_scalar("Reward/Step", mean_step)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
@@ -91,7 +91,7 @@ def run(cfg = []):
         for i, d in enumerate(done):
             if d:
                 reward_last_episode[i] = reward_cur_episode[i]
-                if steps >= cfg["STEPS"]*0.9:
+                if steps >= cfg["STEPS"] * 0.9:
                     rolling_reward_mean_episode.append(reward_cur_episode[i])
                 reward_cur_episode[i] = 0
 
@@ -146,6 +146,7 @@ def format_timedelta(timedelta):
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return '{:0>2d}:{:0>2d}:{:0>2d}'.format(hours, minutes, seconds)
+
 
 if __name__ == '__main__':
     main()

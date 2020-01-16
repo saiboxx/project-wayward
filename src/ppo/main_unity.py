@@ -40,7 +40,6 @@ def run(cfg = []):
     agent = PPOAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
-    acc_reward = 0
     mean_reward = 0
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
@@ -71,7 +70,6 @@ def run(cfg = []):
             agent.replay_buffer.reset()
 
         mean_step = sum(reward) / len(reward)
-        acc_reward += mean_step
         mean_reward += mean_step
         reward_cur_episode += reward
 
