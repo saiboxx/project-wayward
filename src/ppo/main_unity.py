@@ -3,6 +3,7 @@ import yaml
 import time
 import numpy as np
 from typing import Tuple
+from multiprocessing import Pool
 from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
 from torch import tensor
@@ -10,11 +11,11 @@ from torch import tensor
 from src.ppo.agent import PPOAgent
 from src.ppo.summary import Summary
 
-
 def main():
     run([])
 
-def run(cfg = []):
+
+def run(cfg=[]):
     """"
     <TBD>
     """
@@ -23,16 +24,22 @@ def run(cfg = []):
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     print("Loading environment {}.".format(cfg["EXECUTABLE"]))
-    worker_id = np.random.randint(20)
-    env, config_channel = load_environment(cfg["EXECUTABLE"], cfg["NO_GRAPHICS"], worker_id)
-    config_channel.set_configuration_parameters(time_scale=cfg["TIME_SCALE"])
-    env.reset()
-    group_name = env.get_agent_groups()[0]
-    group_spec = env.get_agent_group_spec(group_name)
+    num_envs = cfg["ENVIRONMENTS"]
+    worker_id = np.random.randint(2000)
+    envs, config_channel = list(zip(*[load_environment(cfg["EXECUTABLE"],
+                                                       cfg["NO_GRAPHICS"],
+                                                       worker_id + x)
+                                      for x in range(num_envs)]))
+
+    [c.set_configuration_parameters(time_scale=cfg["TIME_SCALE"]) for c in config_channel]
+    [e.reset() for e in envs]
+
+    group_name = envs[0].get_agent_groups()[0]
+    group_spec = envs[0].get_agent_group_spec(group_name)
     action_space = group_spec.action_shape
     observation_space = group_spec.observation_shapes[0][0]
-    step_result = env.get_step_result(group_name)
-    state = step_result.obs[0]
+    step_results = [e.get_step_result(group_name) for e in envs]
+    state = np.vstack([step_result.obs[0] for step_result in step_results])
     num_agents = len(state)
     summary = Summary(cfg)
 
@@ -56,12 +63,13 @@ def run(cfg = []):
         log_prob = action_distribution.log_prob(action)
         value = agent.critic(state)
 
-        env.set_actions(group_name, action.cpu().numpy())
-        env.step()
-        step_result = env.get_step_result(group_name)
-        new_state = step_result.obs[0]
-        reward = step_result.reward
-        done = step_result.done
+        action_temp = np.split(action, num_envs)
+        [e.set_actions(group_name, a.cpu().numpy()) for (e, a) in zip(envs, action_temp)]
+        [e.step() for e in envs]
+        step_results = [e.get_step_result(group_name) for e in envs]
+        new_state = np.vstack([step_result.obs[0] for step_result in step_results])
+        reward = np.hstack([step_result.reward for step_result in step_results])
+        done = np.hstack([step_result.done for step_result in step_results])
         agent.replay_buffer.add(state, action, reward, done, log_prob, value)
 
         if steps % (cfg["PPO_BUFFER_SIZE"] // num_agents) == 0:
@@ -85,10 +93,9 @@ def run(cfg = []):
         for i, d in enumerate(done):
             if d:
                 reward_last_episode[i] = reward_cur_episode[i]
-                if steps >= cfg["STEPS"]*0.9:
+                if steps >= cfg["STEPS"] * 0.9:
                     rolling_reward_mean_episode.append(reward_cur_episode[i])
                 reward_cur_episode[i] = 0
-
 
         if done[0]:
             reward_mean_episode = reward_last_episode.mean()
@@ -108,10 +115,11 @@ def run(cfg = []):
         summary.adv_step()
 
     print("Closing environment.")
-    env.close()
+    [e.close() for e in envs]
     max_reward_mean_episode = np.mean(rolling_reward_mean_episode)
     summary.close(max_reward_mean_episode)
     return max_reward_mean_episode
+
 
 def load_environment(env_name: str, no_graphics: bool, worker_id: int) \
         -> Tuple[UnityEnvironment, EngineConfigurationChannel]:
