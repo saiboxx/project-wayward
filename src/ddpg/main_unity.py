@@ -17,9 +17,6 @@ def main():
 
 
 def run(cfg=[]):
-    """"
-    <TBD>
-    """
     if cfg == []:
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
@@ -42,16 +39,14 @@ def run(cfg=[]):
     agent = DDPGAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
-    mean_reward = 0
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
-    reward_mean_episode = 0
     rolling_reward_mean_episode = []
     start_time_episode = time.time()
     episode = 1
 
     print("Initiating with warm-up phase")
-    for b in tqdm(range(cfg["BUFFER_SIZE"] // num_agents)):
+    for _ in tqdm(range(cfg["BUFFER_SIZE"] // num_agents)):
         action = np.random.uniform(-1, 1, size=(len(state), action_space))
         env.set_actions(group_name, action)
         env.step()
@@ -75,18 +70,15 @@ def run(cfg=[]):
 
         agent.learn()
 
-        mean_step = sum(reward) / len(reward)
-        mean_reward += mean_step
+        mean_step_reward = np.mean(reward)
         reward_cur_episode += reward
 
-        summary.add_scalar("Reward/Step", mean_step)
+        summary.add_scalar("Reward/Step", mean_step_reward)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
-            mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
             print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. rewards; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, reward_mean_episode, mean_reward, format_timedelta(elapsed_time)))
-            mean_reward = 0
+                  .format(episode, steps, reward_mean_episode, mean_step_reward, format_timedelta(elapsed_time)))
 
         for i, d in enumerate(done):
             if d:

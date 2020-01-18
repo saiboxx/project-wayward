@@ -31,10 +31,8 @@ def main():
     actor.eval()
 
     print("Starting Run with {} steps.".format(cfg["RUN_STEPS"]))
-    mean_reward = 0
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
-    reward_mean_episode = 0
     episode = 1
 
     start_time = time.time()
@@ -49,8 +47,6 @@ def main():
         reward = step_result.reward
         done = step_result.done
 
-        mean_step = sum(reward) / len(reward)
-        mean_reward += mean_step
         reward_cur_episode += reward
 
         for i, d in enumerate(done):

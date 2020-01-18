@@ -3,7 +3,6 @@ import yaml
 import time
 import numpy as np
 from typing import Tuple
-from multiprocessing import Pool
 from src.mlagents.environment import UnityEnvironment
 from src.mlagents.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
 from torch import tensor
@@ -11,14 +10,12 @@ from torch import tensor
 from src.ppo.agent import PPOAgent
 from src.ppo.summary import Summary
 
+
 def main():
     run([])
 
 
 def run(cfg=[]):
-    """"
-    <TBD>
-    """
     if cfg == []:
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
@@ -47,10 +44,8 @@ def run(cfg=[]):
     agent = PPOAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
-    mean_reward = 0
     reward_cur_episode = np.zeros(num_agents)
     reward_last_episode = np.zeros(num_agents)
-    reward_mean_episode = 0
     rolling_reward_mean_episode = []
     start_time_episode = time.time()
     episode = 1
@@ -77,18 +72,15 @@ def run(cfg=[]):
             agent.learn(returns)
             agent.replay_buffer.reset()
 
-        mean_step = sum(reward) / len(reward)
-        mean_reward += mean_step
+        mean_step_reward = np.mean(reward)
         reward_cur_episode += reward
 
-        summary.add_scalar("Reward/Step", mean_step)
+        summary.add_scalar("Reward/Step", mean_step_reward)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
-            mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
             print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. rewards; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, reward_mean_episode, mean_reward, format_timedelta(elapsed_time)))
-            mean_reward = 0
+                  .format(episode, steps, reward_mean_episode, mean_step_reward, format_timedelta(elapsed_time)))
 
         for i, d in enumerate(done):
             if d:

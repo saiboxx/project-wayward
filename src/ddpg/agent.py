@@ -13,7 +13,7 @@ class DDPGAgent(object):
     Depicts the acting Entity.
     """
 
-    def __init__(self, observation_space: int, action_space: int, cfg, summary: Summary):
+    def __init__(self, observation_space: int, action_space: int, cfg: dict, summary: Summary):
         if cfg["UTILIZE_CUDA"]:
             self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         else:

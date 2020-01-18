@@ -4,14 +4,11 @@ import time
 import gym
 import numpy as np
 from torch import from_numpy, save
-from src.ddpg.agent import Agent
+from src.ddpg.agent import DDPGAgent
 from src.ddpg.summary import Summary
 
 
 def main():
-    """"
-    <TBD>
-    """
     with open("config.yml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
@@ -24,11 +21,10 @@ def main():
     summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = Agent(observation_space, action_space, summary)
+    agent = DDPGAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
-    acc_reward = 0
-    mean_reward = 0
+    mean_step_reward = []
     reward_cur_episode = []
     reward_last_episode = 0
     episode = 1
@@ -45,23 +41,20 @@ def main():
         agent.replay_buffer.add(state, action, reward, new_state)
         agent.learn()
 
-        acc_reward += reward
-        mean_reward += reward
+        mean_step_reward.append(reward)
         reward_cur_episode.append(reward)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
-            mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
             print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. reward; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
-            mean_reward = 0
+                  .format(episode, steps, reward_last_episode, np.mean(mean_step_reward), format_timedelta(elapsed_time)))
+            mean_step_reward = []
 
         if done:
             reward_last_episode = sum(reward_cur_episode)
             reward_cur_episode = []
             episode += 1
             env.reset()
-            state = np.zeros((1, observation_space))
 
         state = new_state
 

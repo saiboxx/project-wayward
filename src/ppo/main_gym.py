@@ -4,14 +4,11 @@ import time
 import gym
 import numpy as np
 from torch import tensor, save
-from src.ppo.agent import Agent
+from src.ppo.agent import PPOAgent
 from src.ppo.summary import Summary
 
 
 def main():
-    """"
-    <TBD>
-    """
     with open("config.yml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
@@ -24,11 +21,10 @@ def main():
     summary = Summary(cfg)
 
     print("Creating Agent.")
-    agent = Agent(observation_space, action_space, summary)
+    agent = PPOAgent(observation_space, action_space, cfg, summary)
 
     print("Starting training with {} steps.".format(cfg["STEPS"]))
-    acc_reward = 0
-    mean_reward = 0
+    mean_step_reward = []
     reward_cur_episode = []
     reward_last_episode = 0
     episode = 1
@@ -50,16 +46,14 @@ def main():
             agent.learn(returns)
             agent.replay_buffer.reset()
 
-        acc_reward += reward
-        mean_reward += reward
+        mean_step_reward.append(reward)
         reward_cur_episode.append(reward)
 
         if steps % cfg["VERBOSE_STEPS"] == 0:
-            mean_reward = mean_reward / cfg["VERBOSE_STEPS"]
             elapsed_time = time.time() - start_time
             print("Ep. {0:>4} with {1:>7} steps total; {2:8.2f} last ep. reward; {3:+.3f} step reward; {4}h elapsed" \
-                  .format(episode, steps, reward_last_episode, mean_reward, format_timedelta(elapsed_time)))
-            mean_reward = 0
+                  .format(episode, steps, reward_last_episode, np.mean(mean_step_reward), format_timedelta(elapsed_time)))
+            mean_step_reward = []
 
         if done:
             reward_last_episode = sum(reward_cur_episode)

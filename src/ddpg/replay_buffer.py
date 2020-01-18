@@ -3,10 +3,9 @@ import numpy as np
 import yaml
 from operator import itemgetter
 
+
 class ReplayBuffer(object):
-
     def __init__(self, cfg):
-
         self.max_buffer_size = cfg["BUFFER_SIZE"]
         self.cur_buffer_size = 0
         self.batch_size = cfg["BATCH_SIZE"]
@@ -66,5 +65,3 @@ class ReplayBuffer(object):
             self.rewards.append(reward)
             self.new_states.append(new_state.flatten())
             self.cur_buffer_size = len(self.states)
-
-

@@ -13,11 +13,7 @@ from src.ppo.summary import Summary
 
 
 class PPOAgent(object):
-    """"
-    Depicts the acting Entity.
-    """
-
-    def __init__(self, observation_space: int, action_space: int, cfg, summary: Summary):
+    def __init__(self, observation_space: int, action_space: int, cfg: dict, summary: Summary):
         if len(cfg["LAYER_SIZES"]) == 2:
             self.actor = Actor2Layer(observation_space, action_space, cfg["LAYER_SIZES"], cfg["PPO_STD"])
             self.critic = Critic2Layer(observation_space, cfg["LAYER_SIZES"])
@@ -127,7 +123,6 @@ class PPOAgent(object):
             for step in reversed(range(len(rewards))):
                 delta = rewards[step] + self.gamma * values[step + 1] * masks[step] - values[step]
                 gae = delta + self.gamma * self.lam * masks[step] * gae
-                # prepend to get correct order back
                 returns.insert(0, gae + values[step])
         return returns
 

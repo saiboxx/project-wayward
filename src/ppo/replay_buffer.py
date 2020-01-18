@@ -20,9 +20,6 @@ class ReplayBuffer(object):
 
     def add(self, state: tensor, action: tensor, reward: np.ndarray,
             done: np.ndarray, log_prob: tensor, value: tensor):
-        """"
-
-        """
         if isinstance(reward, np.ndarray):
             self.states.append(state.to(self.device))
             self.actions.append(action.to(self.device))
