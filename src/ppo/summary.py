@@ -18,6 +18,7 @@ class Summary(object):
     def hparams(self, cfg):
         dict = {
             "STEPS": int(cfg["STEPS"]),
+            "GRAVITY": cfg["GRAVITY"],
             "PPO_BUFFER_SIZE": int(cfg["PPO_BUFFER_SIZE"]),
             "PPO_BATCH_SIZE": int(cfg["PPO_BATCH_SIZE"]),
             "PPO_EPOCHS": int(cfg["PPO_EPOCHS"]),

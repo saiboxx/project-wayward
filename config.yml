@@ -1,7 +1,7 @@
 ###############################################################################
 # SET GENERAL PARAMETERS
 ###############################################################################
-EXECUTABLE: crawler
+EXECUTABLE: walker_grav_win
 STEPS: 1000000
 VERBOSE_STEPS: 1000
 CHECKPOINTS: 50000
@@ -9,6 +9,11 @@ NO_GRAPHICS: False
 UTILIZE_CUDA: True
 TIME_SCALE: 20.0
 ENVIRONMENTS: 1 
+#Gravity is only working when used with the prebuilt walker environment from the repo
+#Earth:     9.81
+#Moon:      1.62
+#Jupiter:   24.79
+GRAVITY: 9.81
 #Leave empty for auto mode
 SUMMARY_FOLDER:
 
