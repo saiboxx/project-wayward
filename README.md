@@ -23,6 +23,7 @@ For the implementation of the neural architectures we decided to rely on PyTorch
    
    The basis for training is an executable of an ML-Agents environment, which can be compiled using the Unity IDE.
    For convenience reasons please save the build in the directory `./executables/<your_env_name>` and name the file`<your_env_name>`.
+   Alternatively a compiled build of the walker environment, which can also be used, is included in this repository.
 
 2. **Adjust parameters in the config file**
 
@@ -40,4 +41,4 @@ For the implementation of the neural architectures we decided to rely on PyTorch
    
 5. **Watch trained agent succed**
 
-   During training the models will be saved in `./models`. By specifying the correct path to the chosen model in the config file and using `make run-ddpg` oder `make run-ppo` the environment will be booted in inference mode.
+   During training the models will be saved in `./models`. By specifying the correct path to the chosen model in the config file and using `make run-ddpg` or `make run-ppo` the environment will be booted in inference mode.
