@@ -19,6 +19,7 @@ class Summary(object):
         ounoise = cfg["OUNOISE"]
         dict = {
             "STEPS": int(cfg["STEPS"]),
+            "DDPG_LEARN_STEPS": int(cfg["LEARN_STEPS"]),
             "DDPG_OUNOISE": ounoise,
             "DDPG_GAUSSIAN_START": cfg["GAUSSIAN_START"] if not ounoise else "",
             "DDPG_GAUSSIAN_DECAY": cfg["GAUSSIAN_DECAY"] if not ounoise else "",
