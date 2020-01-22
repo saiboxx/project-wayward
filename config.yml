@@ -80,6 +80,8 @@ OPT_PPO_CRITIC_LEARNING_RATE: [0.00001, 0.001]
 ###############################################################################
 # SET PARAMETERS FOR TRAINING WITH DDPG
 ###############################################################################
+LEARN_STEPS: 1
+
 OUNOISE: False
 
 GAUSSIAN_START: 1.0

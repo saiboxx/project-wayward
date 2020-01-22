@@ -68,7 +68,8 @@ def run(cfg=[]):
         done = step_result.done
         agent.replay_buffer.add(state, action, reward, new_state)
 
-        agent.learn()
+        if steps % cfg["LEARN_STEPS"] == 0:
+            agent.learn()
 
         mean_step_reward = np.mean(reward)
         reward_cur_episode += reward
